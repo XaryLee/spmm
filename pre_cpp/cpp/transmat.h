@@ -2,7 +2,12 @@
 #include <vector>
 #include <fstream>
 #include <string>
-#include "csr.h"
+
+#ifndef _CSR_H_
+#define _CSR_H_
+#include "csr.cpp"
+#endif
+
 using namespace std;
 
 void gen_mtx_txt(string path, int nnzcount, int shape[], vector<double> nnz, vector<int> colidx,vector<int> rowptr,int xsize){
@@ -64,7 +69,7 @@ void gen_new_panels(SpM mtx, vector<SpM> &plist, vector<int> &psize_list, int &b
     element_array = new bool[*(mtx.shape + 1)]();
     vector<int>::const_iterator beg, end;
     vector<double>::const_iterator dbeg, dend;
-    for( auto index = 0; index < mtx.indptr.size() - 1; index++ ){
+    for( auto index = 0; index < (int)(mtx.indptr.size() - 1); index++ ){
         beg = mtx.indices.begin() + mtx.indptr[index];
         end = mtx.indices.begin() + mtx.indptr[index + 1];
         vector<int> row_indices(beg, end);
