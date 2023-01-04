@@ -46,16 +46,90 @@ SpM reorder_row(SpM mtx, vector<int> seq){
             rowptr.push_back(*rowptr.end());
         else{
             rowptr.push_back(*rowptr.end() + (mtx.indptr[s+1] - mtx.indptr[s]));
-            for( i = mtx.indptr[s]; i < mtx.indptr[s+1]; i++ ){
+            for( int i = mtx.indptr[s]; i < mtx.indptr[s+1]; i++ ){
                 nnz.push_back(mtx.data[i]);
-                colidx.push_back(mtx.indices[i])
+                colidx.push_back(mtx.indices[i]);
             }
         }
     }
     return SpM(nnz, colidx, rowptr, mtx.shape);
 }
 
-void gen_new_panels(SpM mtx, vector<SpM> &plist, vector<int> &psize_list, int &bnum){}
+void gen_new_panels(SpM mtx, vector<SpM> &plist, vector<int> &psize_list, int &bnum){
+    // plist = []
+    // psize_list = [0]
+    int threshold = 512 * 1024 / 8;
+    int counter = 0;
+    bool *element_array;
+    element_array = new bool[*(mtx.shape + 1)]();
+    vector<int>::const_iterator beg, end;
+    vector<double>::const_iterator dbeg, dend;
+    for( auto index = 0; index < mtx.indptr.size() - 1; index++ ){
+        beg = mtx.indices.begin() + mtx.indptr[index];
+        end = mtx.indices.begin() + mtx.indptr[index + 1];
+        vector<int> row_indices(beg, end);
+        for(int value:row_indices){
+            if(element_array[value] == 0)
+                counter++;
+            element_array[value] = 1;
+        }
+        if(counter >= threshold){
+            delete[] element_array;
+            element_array = new bool[*(mtx.shape + 1)]();
+            counter = 0;
+            psize_list.push_back(index + 1);
+            // p_indptr = mtx.indptr[psize_list[-2]:psize_list[-1]+1]
+            beg = mtx.indptr.begin() + *(psize_list.end() - 2);
+            end = mtx.indptr.begin() + *(psize_list.end() - 1);
+            vector<int> p_indptr(beg, end);
+            // p_nnz = mtx.data[p_indptr[0]:p_indptr[-1]]
+            dbeg = mtx.data.begin() + *(p_indptr.begin());
+            dend = mtx.data.begin() + *(p_indptr.end() - 1);
+            vector<double> p_nnz(dbeg, dend);
+            // p_indices = mtx.indices[p_indptr[0]:p_indptr[-1]]
+            beg = mtx.indices.begin() + *(p_indptr.begin());
+            end = mtx.indices.begin() + *(p_indptr.end() - 1);
+            vector<int> p_indices(beg, end); 
+            int offset = p_indptr[0];
+            // p_indptr = p_indptr - offset
+            for(int each:p_indptr)
+                each -= offset;
+            // pm = scipy.sparse.csr_matrix((p_nnz, p_indices, p_indptr), shape=(psize_list[-1]-psize_list[-2], mtx.shape[1]))
+            int pm_shape[2];
+            pm_shape[0] = *(psize_list.end() - 1) - *(psize_list.end() - 2);
+            pm_shape[1] = mtx.shape[1];
+            SpM pm(p_nnz, p_indices, p_indptr, pm_shape);
+            plist.push_back(pm);
+        }
+    }
+    psize_list.push_back(mtx.indptr.size() - 1);
+    // p_indptr = mtx.indptr[psize_list[-2]:psize_list[-1]+1]
+    beg = mtx.indptr.begin() + *(psize_list.end() - 2);
+    end = mtx.indptr.begin() + *(psize_list.end() - 1);
+    vector<int> p_indptr(beg, end);
+    // p_nnz = mtx.data[p_indptr[0]:p_indptr[-1]]
+    dbeg = mtx.data.begin() + *(p_indptr.begin());
+    dend = mtx.data.begin() + *(p_indptr.end() - 1);
+    vector<double> p_nnz(dbeg, dend);
+    // p_indices = mtx.indices[p_indptr[0]:p_indptr[-1]]
+    beg = mtx.indices.begin() + *(p_indptr.begin());
+    end = mtx.indices.begin() + *(p_indptr.end() - 1);
+    vector<int> p_indices(beg, end); 
+    int offset = p_indptr[0];
+    // p_indptr = p_indptr - offset
+    for(int each:p_indptr)
+        each -= offset;
+    // pm = scipy.sparse.csr_matrix((p_nnz, p_indices, p_indptr), shape=(psize_list[-1]-psize_list[-2], mtx.shape[1]))
+    int pm_shape[2];
+    pm_shape[0] = *(psize_list.end() - 1) - *(psize_list.end() - 2);
+    pm_shape[1] = mtx.shape[1];
+    SpM pm(p_nnz, p_indices, p_indptr, pm_shape);
+    plist.push_back(pm);
+    bnum = psize_list.size() - 1;
+    cout << "the number of blocks is" << bnum << endl;
+
+    delete[] element_array;
+}
 
 int main(){
     return 0;
