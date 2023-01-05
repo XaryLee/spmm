@@ -1,11 +1,6 @@
 #include <iostream>
 #include <vector>
-
-#ifndef _CSR_H_
-#define _CSR_H_
 #include "csr.h"
-#endif
-
 #include "transmat.h"
 #include "bitmap.h"
 using namespace std;

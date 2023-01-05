@@ -3,11 +3,7 @@
 #include <math.h>
 #include <algorithm>
 #include <numeric>
-
-#ifndef _CSR_H_
-#define _CSR_H_
-#include "csr.cpp"
-#endif
+#include "csr.h"
 
 using namespace std;
 

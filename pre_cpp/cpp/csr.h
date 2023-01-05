@@ -1,3 +1,6 @@
+#ifndef _CSR_H_
+#define _CSR_H_
+
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -17,3 +20,5 @@ SpM::SpM(vector <double> data, vector<int> indices, vector<int> indptr, int* sha
     this->indptr = indptr;
     this->shape = shape;
 }
+
+#endif
