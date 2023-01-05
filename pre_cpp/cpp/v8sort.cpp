@@ -130,6 +130,107 @@ void panel_sort_nnz(vector<int>& out_seq, vector<int>& spv8_list, SpM mr, vector
     }
 }
 
+SpM transpose_v8(SpM mr, vector<int> spv8_list, int panelsize=2*1024){
+    auto rowptr = mr.indptr;
+    auto colidx = mr.indices;
+    auto data = mr.data;
+    auto new_rowptr = mr.indptr;
+    vector<int> new_colidx;
+    vector<double> new_data;
+    int base = 0;
+    for(int i = 0; i < (int)(spv8_list.size()); i++){
+        int count = spv8_list[i];
+        for(int row_index = base; row_index < base + count; row_index += 8){
+            int rowlen = rowptr[row_index + 1] - rowptr[row_index];
+            int nnz_index = rowptr[row_index];
+            int *add_data = new int[rowlen*8];
+            int *add_colidx = new int[rowlen*8];
+            for(int row = 0; row < rowlen; row++)
+                for(int col = 0; col < 8; col++){
+                    add_data[8 * row + col] = data[nnz_index + col * rowlen + row];
+                    add_colidx[8 * row + col] = colidx[nnz_index + col * rowlen + row];
+                }
+            for(int j = 0; j < rowlen*8; j++)
+                new_data.push_back(add_data[j]);
+            for(int j = 0; j < rowlen*8; j++)
+                new_colidx.push_back(add_colidx[j]);
+            delete[] add_data;
+            delete[] add_colidx;
+        }
+        if(i == (int)(spv8_list.size()-1)){
+            int row_begin = base + count;
+            int nnz_begin = rowptr[row_begin];
+            for(int k = nnz_begin; k < (int)(data.size()); k++)
+                new_data.push_back(data[k]);
+            for(int k = nnz_begin; k < (int)(colidx.size()); k++)
+                new_colidx.push_back(colidx[k]);
+        }
+        else{
+            int row_begin = base + count;
+            int row_end = base + panelsize;
+            int nnz_begin = rowptr[row_begin];
+            int nnz_end = rowptr[row_end];
+            for(int k = nnz_begin; k < nnz_end; k++)
+                new_data.push_back(data[k]);
+            for(int k = nnz_begin; k < nnz_end; k++)
+                new_colidx.push_back(colidx[k]);
+        }
+        base += panelsize;
+    }
+    return SpM(new_data, new_colidx, new_rowptr, mr.shape);
+}
+
+SpM transpose_spv8_nnz(SpM mr, vector<int> spv8_list, vector<int> panelsize_list){
+    auto rowptr = mr.indptr;
+    auto colidx = mr.indices;
+    auto data = mr.data;
+    auto new_rowptr = mr.indptr;
+    vector<int> new_colidx;
+    vector<double> new_data;
+    int base = 0;
+    for(int i = 0; i < (int)(spv8_list.size()); i++){
+        int count = spv8_list[i];
+        int panelsize = panelsize_list[i+1] - panelsize_list[i];
+        for(int row_index = base; row_index < base + count; row_index += 8){
+            int rowlen = rowptr[row_index + 1] - rowptr[row_index];
+            int nnz_index = rowptr[row_index];
+            int *add_data = new int[rowlen*8];
+            int *add_colidx = new int[rowlen*8];
+            for(int row = 0; row < rowlen; row++)
+                for(int col = 0; col < 8; col++){
+                    add_data[8 * row + col] = data[nnz_index + col * rowlen + row];
+                    add_colidx[8 * row + col] = colidx[nnz_index + col * rowlen + row];
+                }
+            for(int j = 0; j < rowlen*8; j++)
+                new_data.push_back(add_data[j]);
+            for(int j = 0; j < rowlen*8; j++)
+                new_colidx.push_back(add_colidx[j]);
+            delete[] add_data;
+            delete[] add_colidx;
+        }
+        if(i == (int)(spv8_list.size()-1)){
+            int row_begin = base + count;
+            int nnz_begin = rowptr[row_begin];
+            for(int k = nnz_begin; k < (int)(data.size()); k++)
+                new_data.push_back(data[k]);
+            for(int k = nnz_begin; k < (int)(colidx.size()); k++)
+                new_colidx.push_back(colidx[k]);
+        }
+        else{
+            int row_begin = base + count;
+            int row_end = base + panelsize;
+            int nnz_begin = rowptr[row_begin];
+            int nnz_end = rowptr[row_end];
+            for(int k = nnz_begin; k < nnz_end; k++)
+                new_data.push_back(data[k]);
+            for(int k = nnz_begin; k < nnz_end; k++)
+                new_colidx.push_back(colidx[k]);
+        }
+        base += panelsize;
+    }
+    return SpM(new_data, new_colidx, new_rowptr, mr.shape);
+}
+
 int main(){
     return 0;
 }
