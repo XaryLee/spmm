@@ -230,7 +230,3 @@ SpM transpose_spv8_nnz(SpM mr, vector<int> spv8_list, vector<int> panelsize_list
     }
     return SpM(new_data, new_colidx, new_rowptr, mr.shape);
 }
-
-int main(){
-    return 0;
-}
