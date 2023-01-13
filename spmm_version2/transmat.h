@@ -90,7 +90,7 @@ void gen_new_panels(SpM mtx, vector<SpM> &plist, vector<int> &psize_list, int &b
             psize_list.push_back(index + 1);
             // p_indptr = mtx.indptr[psize_list[-2]:psize_list[-1]+1]
             beg = mtx.indptr.begin() + *(psize_list.end() - 2);
-            end = mtx.indptr.begin() + *(psize_list.end() - 1);
+            end = mtx.indptr.begin() + *(psize_list.end() - 1) + 1;
             vector<int> p_indptr(beg, end);
             // p_nnz = mtx.data[p_indptr[0]:p_indptr[-1]]
             dbeg = mtx.data.begin() + *(p_indptr.begin());
@@ -102,7 +102,7 @@ void gen_new_panels(SpM mtx, vector<SpM> &plist, vector<int> &psize_list, int &b
             vector<int> p_indices(beg, end); 
             int offset = p_indptr[0];
             // p_indptr = p_indptr - offset
-            for(int each:p_indptr)
+            for(int &each:p_indptr)
                 each -= offset;
             // pm = scipy.sparse.csr_matrix((p_nnz, p_indices, p_indptr), shape=(psize_list[-1]-psize_list[-2], mtx.shape[1]))
             vector<int> pm_shape(3);

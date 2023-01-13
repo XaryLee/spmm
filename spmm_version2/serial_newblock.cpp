@@ -124,6 +124,10 @@ void gen_trace_formats(SpM mr,vector<int> &seq_input,vector<int> &rseq,vector<in
 
     vector<SpM> regions;
     vector<int> bsize_list{0};
+
+    // cout << "check mr_bitmap" << endl;
+    // mr_bitmap.check();
+
     gen_new_panels(mr_bitmap,regions,bsize_list,bnum);
     // for(auto i : regions[0].indices) cout<<i<<" ";
     // for(auto i: regions[0].indptr) cout<<i<<" ";
@@ -138,13 +142,40 @@ void gen_trace_formats(SpM mr,vector<int> &seq_input,vector<int> &rseq,vector<in
         vector<int> spv8_list;
         if(v8){
             vector<int> add_panelsize_list = gen_panel_list(*r);
+
+            // cout << "check *r" << endl;
+            // (*r).check();
+
             panel_sort_nnz(seq_v8,spv8_list,*r,add_panelsize_list);
+            
+            // cout << "check spv8_list\n";
+            // for(auto each:spv8_list) cout << each << ' ';
+            // cout << endl;
+
+            // cout << "check panelsize_list\n";
+            // for(auto each:add_panelsize_list) cout << each << ' ';
+            // cout << endl;
+            
+
             SpM tmp_r = reorder_row(*r,seq_v8);
+
+            // cout << "check tmp_r\n";
+            // tmp_r.check();
+
+            // cout << "tmp_r_indices_size:\n";
+            // cout << tmp_r.indices.size() << '\n';
+            // cout << "tmp_r_rowptr:\n";
+            // for(auto each:tmp_r.indptr) cout << each << ' '; cout << endl;
+
             //transpose_spv8_nnz:
             //bug here?输出的indice_size为75，应该和输入一样是85
             //
             *r = transpose_spv8_nnz(tmp_r,spv8_list,add_panelsize_list);
-            cout<<(*r).indptr.size()<<" "<<(*r).indices.size()<<endl;
+            // cout<<(*r).indptr.size()<<" "<<(*r).indices.size()<<endl;
+            
+            // cout << "check transpose\n";
+            // (*r).check();
+
             vector<int> ex_in;            
             ex_in.assign(add_panelsize_list.begin(),add_panelsize_list.end()-1);
             panelsize_list.push_back(ex_in);
@@ -228,6 +259,10 @@ int main(){
         string path3 = ".mtx";
         string mpath = path1+mname+path2+mname+path3;
         SpM mr = csr_matrix(mpath);
+
+        // cout << "check csr_matrix" << endl;
+        // mr.check();
+
         // gen_serail_origin(mr,new_mr,seq_dict);
         vector<int> seq;
         vector<int> sseq;
