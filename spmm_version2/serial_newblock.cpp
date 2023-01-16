@@ -3,6 +3,7 @@
 #include<string>
 #include<fstream>
 #include<map>
+#include<unordered_map>
 #include "csr.h"
 #include "bitmap.h"
 #include "transmat.h"
@@ -64,11 +65,13 @@ SpM csr_matrix(string path){
     return SpM(data,indices,indptr,shape);
 }
 
-void gen_serail_origin(SpM mr,SpM &new_mr,map<int,int> &seq_dict){
+void gen_serail_origin(SpM mr,SpM &new_mr,unordered_map<int,int> &seq_dict,vector<int> &seq_order){
     int seq_cnt = 0;
     for(auto ind_iter : mr.indices){
         auto key_iter = seq_dict.find(ind_iter);
         if(key_iter == seq_dict.end()){
+            // seq_dict.insert(make_pair(ind_iter,seq_cnt));
+            seq_order.push_back(ind_iter);
             seq_dict[ind_iter] = seq_cnt;
             seq_cnt++;
             if(seq_cnt == mr.shape[1]) break;
@@ -81,7 +84,7 @@ void gen_serail_origin(SpM mr,SpM &new_mr,map<int,int> &seq_dict){
     new_mr = SpM(mr.data,new_seq,mr.indptr,mr.shape);
 }
 //是不是有点问题
-void gen_serail(SpM mr,SpM &new_mr,map<int,int> &seq_dict){
+void gen_serail(SpM mr,SpM &new_mr,unordered_map<int,int> &seq_dict){
     int seq_cnt = 0;
     vector<int> exist_colidx(mr.shape[1],0);
     for(auto iter = mr.indices.begin();iter != mr.indices.end();iter++) exist_colidx[*iter] = 1;
@@ -114,7 +117,7 @@ void gen_trace_formats(SpM mr,vector<int> &seq_input,vector<int> &rseq,vector<in
 
     vector<int> seq_v8_block;
     int offset =0;
-    vector<map<int,int>> bseq_list;
+    vector<unordered_map<int,int>> bseq_list;
     vector<int> bserial_colidx;
     vector<double> bserial_data;
     vector<int> bserial_indptr = {0};
@@ -135,6 +138,7 @@ void gen_trace_formats(SpM mr,vector<int> &seq_input,vector<int> &rseq,vector<in
     int cnt = 0;
     vector<vector<int>> spv8_lists;
     vector<vector<int>> panelsize_list;
+    vector<vector<int>> seq_order;
     for(auto r = regions.begin();r!=regions.end();r++){
         // for(auto i : (*r).indices) cout<<i<<" ";
         // for(auto i: (*r).indptr) cout<<i<<" ";
@@ -199,9 +203,10 @@ void gen_trace_formats(SpM mr,vector<int> &seq_input,vector<int> &rseq,vector<in
         cnt = cnt + 1;
 
         SpM smr;
-        map<int,int> seq;
+        unordered_map<int,int> seq;
+        vector<int> order;
         if(serial){
-            if(origin) gen_serail_origin(*r,smr,seq);
+            if(origin) gen_serail_origin(*r,smr,seq,order);
             else gen_serail(*r,smr,seq);
         }
         else{
@@ -210,6 +215,7 @@ void gen_trace_formats(SpM mr,vector<int> &seq_input,vector<int> &rseq,vector<in
             for(int i = 0;i < r->shape[1];i++) seq[i] = i;
         }
 
+        seq_order.push_back(order);
         bseq_list.push_back(seq);
 
         for(auto cc = smr.indices.begin();cc != smr.indices.end();cc++) bserial_colidx.push_back(*cc + offset);
@@ -217,7 +223,7 @@ void gen_trace_formats(SpM mr,vector<int> &seq_input,vector<int> &rseq,vector<in
     }
     smr_out = SpM(bserial_data,bserial_colidx,bserial_indptr,mr.shape);
     //这里是要一维的数组
-    vector<vector<int>> seq_temp = SerialSort_block(seq_bitmap,seq_v8_block,bseq_list);
+    vector<vector<int>> seq_temp = SerialSort_block(seq_bitmap,seq_v8_block,bseq_list,seq_order);
     seq_input.resize(0);
     for(auto i = seq_temp.begin();i != seq_temp.end();i++){
         for(auto j = i->begin();j != i->end();j++){
@@ -226,10 +232,9 @@ void gen_trace_formats(SpM mr,vector<int> &seq_input,vector<int> &rseq,vector<in
     }
     rseq = SeqReverse(gen_rseq(seq_bitmap,seq_v8_block));
     sseq.resize(0);
-    for(auto c = bseq_list.begin();c != bseq_list.end();c++){
-        for(auto k = c->begin();k != c->end();k++){
-            sseq.push_back(k->first);
-        }
+    cnt = 0;
+    for(auto k : seq_order[cnt]){
+        sseq.push_back(k);
     }
 }
 
@@ -271,10 +276,10 @@ int main(){
         SpM smr;
         gen_trace_formats(mr,seq,rseq,sseq,smr,bnum,1,1,0,1);
         cout<<"done"<<endl;
-        if(seq.empty()) cout<<"empty";
+        if(sseq.empty()) cout<<"empty";
         else{
-        for(int i = 0;i<seq.size();i++){
-            cout<<seq[i]<<" ";
+        for(int i = 0;i<sseq.size();i++){
+            cout<<sseq[i]<<" ";
         }}
     }
 

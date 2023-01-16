@@ -47,7 +47,7 @@ int blur(vector<int> score, int sectsize, SpM mr){
             index = i;
         }
     if(max)
-        return index;
+        return index + 1;
     else
         return 0;
 }
@@ -62,8 +62,11 @@ vector<int> argsort(const vector<int> v){
 vector<int> gen_bitorder(vector<vector<int>> scores, int sectsize, SpM mr){
     cout << "gen_bitorder" << endl;
     vector<int> bitseq;
-    for(auto score:scores)
-        bitseq.push_back(blur(score, sectsize, mr));
+    for(auto score:scores){
+        int bint = blur(score, sectsize, mr);
+        //cout<< bint<<" ";
+        bitseq.push_back(bint);
+        }
     return argsort(bitseq);
 }
 
