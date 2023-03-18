@@ -26,14 +26,18 @@ SpM::SpM(double* data, int* indices, int* indptr, int* shape){
     this->indices = new int[shape[2]];
     this->indptr = new int[shape[0]+1];
     this->shape = new int[3];
-    for(int i = 0; i < shape[2]; i++)
-        this->data[i] = data[i];
-    for(int i = 0; i < shape[2]; i++)
-        this->indices[i] = indices[i];
-    for(int i = 0; i < shape[0]+1; i++)
-        this->indptr[i] = indptr[i];
-    for(int i = 0; i < 3; i++)
-        this->shape[i] = shape[i];
+    // for(int i = 0; i < shape[2]; i++)
+    //     this->data[i] = data[i];
+    // for(int i = 0; i < shape[2]; i++)
+    //     this->indices[i] = indices[i];
+    // for(int i = 0; i < shape[0]+1; i++)
+    //     this->indptr[i] = indptr[i];
+    // for(int i = 0; i < 3; i++)
+    //     this->shape[i] = shape[i];
+    memcpy(this->data, data, sizeof(*data)*shape[2]);
+    memcpy(this->indices, indices, sizeof(*indices)*shape[2]);
+    memcpy(this->indptr, indptr, sizeof(*indptr)*(shape[0]+1));
+    memcpy(this->shape, shape, sizeof(*shape)*3);
 }
 
 SpM::~SpM(){
