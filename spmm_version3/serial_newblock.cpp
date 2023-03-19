@@ -35,10 +35,10 @@ SpM csr_matrix(string path){
     shape[1]=num_col;
     shape[2]=num_lines;
 
-    int indices[num_lines];
-    int indptr[num_row];
+    int* indices = new int[num_lines];
+    int* indptr = new int[num_row];
     indptr[0] = 0;
-    double data[num_lines];
+    double* data = new double[num_lines];
     int cnt = 1;
     int times = 0;
     int index = 1;
@@ -64,8 +64,12 @@ SpM csr_matrix(string path){
     }
     indptr[index++] = shape[2];
     file.close();
+    auto mr = SpM(data,indices,indptr,shape);
+    delete[] data; data = NULL;
+    delete[] indices; indices = NULL;
+    delete[] indptr; indptr = NULL;
     // cout<<mr.shape[0]<<mr.shape[1];
-    return SpM(data,indices,indptr,shape);
+    return mr;
 }
 
 void gen_serail_origin(SpM &mr,SpM &new_mr,unordered_map<int,int> &seq_dict,vector<int> &seq_order){
@@ -107,7 +111,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     int* seq_bitmap;
     SpM mr_bitmap;
     if(bitmap){
-        int sect = 8;
+        int sect = 2048;
         seq_bitmap = bitmap_reorder(mr,sect);
         // mr_bitmap = reorder_row(mr,seq_bitmap);
     }
@@ -239,7 +243,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 
 int main(){
     vector<string> mlist;
-    ifstream file("D:\\Users\\Desktop\\learning in XJTU\\VSCodeC++\\Spmm\\matrix.txt");
+    ifstream file("matrix.txt");
     string s;
     while(getline(file,s)){
         mlist.push_back(s);
@@ -248,7 +252,7 @@ int main(){
     for(auto mlist_iter = mlist.begin();mlist_iter != mlist.end();mlist_iter++){
         string mname = *mlist_iter;
         mname = get_mname(mname);
-        string path1 = "D:\\Users\\Desktop\\learning in XJTU\\VSCodeC++\\Spmm\\mat\\mtx\\";
+        string path1 = "mat/mtx/";
         string path2 = "/";
         string path3 = ".mtx";
         string mpath = path1+mname+path2+mname+path3;
