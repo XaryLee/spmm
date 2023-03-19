@@ -9,9 +9,10 @@
 
 using namespace std;
 
-int** get_scoreboard(SpM mr, int sectsize){
+int** get_scoreboard(SpM &mr, int sectsize){
     // cout << "get_scoreboard" << endl;
-    int** board = new int*[mr.shape[0]];
+    int shape = mr.shape[0];
+    int** board = new int*[shape];
     int sectnum = ceil(mr.shape[1]/sectsize);
     int* nn;
     // cout<<mr.shape[0]<<mr.shape[1]<<mr.shape[2];
@@ -45,7 +46,7 @@ int** get_scoreboard(SpM mr, int sectsize){
     return board;
 }
 
-int blur(int* score, int sectsize, SpM mr){
+int blur(int* score, int sectsize, SpM &mr){
     // cout << "blur" << endl;
     int sectnum = ceil(mr.shape[1]/sectsize);
     // size(score) = sectnum
@@ -68,7 +69,7 @@ int* argsort(int* v, int len){
     return idx;
 }
 
-int* gen_bitorder(int** scores, int sectsize, SpM mr){
+int* gen_bitorder(int** scores, int sectsize, SpM &mr){
     // cout << "gen_bitorder" << endl;
     int nrows = mr.shape[0]; // 行数
     int* bitseq = new int[nrows];
@@ -88,7 +89,7 @@ int* gen_bitorder(int** scores, int sectsize, SpM mr){
     return argsort(bitseq, nrows);
 }
 
-int* bitmap_reorder(SpM mr, int sectsize){
+int* bitmap_reorder(SpM &mr, int sectsize){
     // cout << "bitmap_reorder" << endl;
     auto scores = get_scoreboard(mr, sectsize);
     auto row_seq = gen_bitorder(scores, sectsize, mr);
