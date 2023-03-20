@@ -70,6 +70,13 @@ int* argsort(int* v, int len){
     return idx;
 }
 
+vector<int> argsort(const vector<int> v){
+    vector<int> idx(v.size());
+    iota(idx.begin(), idx.end(), 0);
+    sort(idx.begin(), idx.end(), [&v](int i1, int i2){return v[i1] < v[i2];});
+    return idx;
+}
+
 int* gen_bitorder(int** const &scores, int sectsize, SpM &mr){
     // cout << "gen_bitorder" << endl;
     int nrows = mr.shape[0]; // 行数

@@ -49,17 +49,18 @@ void panel_sort(vector<int>& out_seq, vector<int>& spv8_list, SpM &mr, int panel
     auto seq = get_row_lens(mr);
     int pnum = (int)(seq.size() / panelsize);
     int iterations = 0;
+    int count, spv8_len;
+    vector<int> order;
+    vector<int> remain;
+    vector<int> same_len_rows;
+    vector<int> pseq;
     if(pnum == (float)(seq.size()) / (float)(panelsize))
         iterations = pnum;
     else
         iterations = pnum + 1;
     for(int p = 0; p < iterations; p++){
-        int count = 0;
-        vector<int> order;
-        vector<int> remain;
-        vector<int> same_len_rows;
-        vector<int> pseq;
-        int spv8_len = 0;
+        count = 0;   
+        spv8_len = 0;
         if(p == pnum){
             pseq = argsort(vector<int>(seq.begin() + p * panelsize, seq.end()));
             for(auto& each:pseq)
@@ -96,13 +97,14 @@ void panel_sort(vector<int>& out_seq, vector<int>& spv8_list, SpM &mr, int panel
 
 void panel_sort_nnz(vector<int>& out_seq, vector<int>& spv8_list, SpM &mr, vector<int> panelsize_list, int panelsize = 2 * 1024){
     auto seq = get_row_lens(mr);
+    vector<int> order;
+    vector<int> remain;
+    vector<int> same_len_rows;
+    vector<int> pseq;
+    int count, spv8_len;
     for(int j = 0; j < panelsize_list.size() - 1; j++){
-        int count = 0;
-        vector<int> order;
-        vector<int> remain;
-        vector<int> same_len_rows;
-        vector<int> pseq;
-        int spv8_len = 0;
+        count = 0;
+        spv8_len = 0;
         pseq = argsort(vector<int>(seq.begin() + panelsize_list[j], seq.begin() + panelsize_list[j+1]));
         for(auto &each:pseq)
             each += panelsize_list[j];
@@ -291,7 +293,9 @@ SpM transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, vector<int> panelsize_lis
         }
         base += panelsize;
     }
-    return SpM(new_data, new_colidx, new_rowptr, mr.shape);
+    SpM new_mr(new_data, new_colidx, new_rowptr, mr.shape);
+    delete[] new_data, new_colidx;
+    return new_mr;
 }
 
 #endif
