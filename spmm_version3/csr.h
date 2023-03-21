@@ -11,9 +11,9 @@ public:
     int* indptr;
     int* shape;
     SpM(double*, int*, int*, int*);
-    SpM(){}
+    SpM();
     ~SpM();
-    // void operator=(const SpM &);
+    void operator=(const SpM &);
     void check(bool);
 };
 
@@ -41,12 +41,31 @@ SpM::SpM(double* data, int* indices, int* indptr, int* shape){
     memcpy(this->shape, shape, sizeof(*shape)*3);
 }
 
-// void SpM::operator=(const SpM &mr){
-//     memcpy(data, mr.data, sizeof(*data)*shape[2]);
-//     memcpy(indices, mr.indices, sizeof(*indices)*shape[2]);
-//     memcpy(indptr, mr.indptr, sizeof(*indptr)*(shape[0]+1));
-//     memcpy(shape, mr.shape, sizeof(*shape)*3);
-// }
+SpM::SpM(){
+    data = NULL;
+    indices = NULL;
+    indptr = NULL;
+    shape = NULL;
+}
+
+void SpM::operator=(const SpM &mr){
+    // cout << "=" << endl;
+    delete[] data, indices, indptr, shape;
+    // cout << "delete done" << endl;
+    data = new double[mr.shape[2]];
+    indices = new int[mr.shape[2]];
+    indptr = new int[mr.shape[0]+1];
+    shape = new int[3];
+    // cout << "new done" << endl;
+    memcpy(shape, mr.shape, sizeof(int)*3);
+    memcpy(data, mr.data, sizeof(double)*shape[2]);
+    // cout << "0" << endl;
+    memcpy(indices, mr.indices, sizeof(int)*shape[2]);
+    // cout << "0" << endl;
+    memcpy(indptr, mr.indptr, sizeof(int)*(shape[0]+1));
+
+    // cout << "done" << endl;
+}
 
 SpM::~SpM(){
     delete[] data;
@@ -71,8 +90,9 @@ void SpM::check(bool show_indptr=true){
     cout << endl;
     if(show_indptr){
         cout << "indptr:\n";
-        for(int i = 0; i < shape[0]+1; i++)
+        for(int i = 0; i < min(shape[0]+1, 100); i++){
             cout << indptr[i] << ' ';
+        }
         cout << endl;
     }
     cout << "------end------" << endl;
