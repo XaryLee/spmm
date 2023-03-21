@@ -8,16 +8,33 @@ using namespace std;
 
 SpM reorder_row(SpM &mtx, int* seq){
     // len(seq) = mtx.shape[0]
+    // mtx.check();
+
+    // cout << "seq: " << endl;
+    // for(int i = 0; i < min(100, mtx.shape[0]); i++)
+    //     cout << seq[i] << ' ';
+    // cout << endl;
+    
     double* nnz = new double[mtx.shape[2]];
     int* colidx = new int[mtx.shape[2]];
     int* rowptr = new int[mtx.shape[0]+1]();
     int tail = 0;
+    int rowptr_tail = 0;
+    rowptr[rowptr_tail++] = 0;
+    cout << "for" << endl;
     for(int i = 0; i < mtx.shape[0]; i++){
+        if(i % 10000 == 0)
+            cout << i << endl;
         int s = seq[i];
-        if(mtx.indptr[s] == mtx.indptr[s+1])
-            rowptr[i+1] = rowptr[i];
+        if(mtx.indptr[s] == mtx.indptr[s+1]){
+            // cout << "if" << endl;
+            rowptr[rowptr_tail] = rowptr[rowptr_tail-1];
+            rowptr_tail++;
+        }
         else{
-            rowptr[i+1] = (rowptr[i] + (mtx.indptr[s+1] - mtx.indptr[s]));
+            // cout << "else" << endl;
+            rowptr[rowptr_tail] = (rowptr[rowptr_tail-1] + (mtx.indptr[s+1] - mtx.indptr[s]));
+            rowptr_tail++;
             for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
                 nnz[tail] = (mtx.data[j]);
                 colidx[tail] = (mtx.indices[j]);
@@ -26,6 +43,7 @@ SpM reorder_row(SpM &mtx, int* seq){
             }
         }
     }
+    cout << "end for" << endl;
     SpM mr(nnz, colidx, rowptr, mtx.shape);
     // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
     delete[] nnz, colidx, rowptr;
@@ -33,7 +51,7 @@ SpM reorder_row(SpM &mtx, int* seq){
     return mr;
 }
 
-int gen_new_panels(SpM &mtx, SpM* plist, vector<int> &psize_list, int &bnum){
+int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
 
     // 返回值是plist的长度
 
@@ -183,7 +201,7 @@ int gen_new_panels(SpM &mtx, SpM* plist, vector<int> &psize_list, int &bnum){
     SpM pm(p_nnz, p_indices, p_indptr, pm_shape);
     delete[] p_nnz, p_indices, p_indptr;
     // plist.push_back(pm);
-    cout << "000" << endl;
+    // cout << "000" << endl;
     plist[tail++] = pm;
     bnum = psize_list.size() - 1;
     cout << "the number of blocks is " << bnum << endl;

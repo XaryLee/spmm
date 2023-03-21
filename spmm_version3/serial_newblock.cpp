@@ -150,17 +150,18 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     vector<vector<int>> spv8_lists;
     vector<vector<int>> panelsize_list;
     vector<vector<int>> seq_order;
-
+    cout << regions_length << endl;
     for(int index = 0;index < regions_length;index++){
-        // cout<<"loop"<<index<<endl;
+        cout<<"loop "<<index<<endl;
         vector<int> seq_v8;
         vector<int> spv8_list;
         if(v8){
             // cout<<"111"<<endl;
             vector<int> add_panelsize_list;
             //返回一个add_panelsize_list的长度
+            // regions[index].check(false);
             add_panelsize_list = gen_panel_list(regions[index]);
-
+            cout << "111" << endl;
             panel_sort_nnz(seq_v8,spv8_list,regions[index],add_panelsize_list);
 
             int *seq_v8_arr = new int[seq_v8.size()];
@@ -168,21 +169,28 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 
             // for(int i = 0;i < seq_v8.size();i++) cout<<seq_v8_arr[i]<<" ";
 
-            cout<<endl<<"222"<<endl;
-
+            cout<<"222"<<endl;
+            regions[index].check(false);
+            // cout << "seq: " << endl;
+            // for(auto i = 0; i < 100; i++)
+            //     cout << seq_v8[i] << ' ';
+            // cout << endl;
             SpM tmp_r = reorder_row(regions[index],seq_v8_arr);
 
             // delete[] seq_v8_arr;seq_v8_arr = NULL;
 
             cout<<"333"<<endl;
+            // tmp_r.check(false);
 
             regions[index] = transpose_spv8_nnz(tmp_r,spv8_list,add_panelsize_list);
             // tmp_r.check();
+            cout<<"444"<<endl;
 
             vector<int> ex_in;            
             ex_in.assign(add_panelsize_list.begin(),add_panelsize_list.end()-1);
+            // cout<<"444"<<endl;
             panelsize_list.push_back(ex_in);
-            cout<<"444"<<endl;
+            // cout<<"444"<<endl;
         }
         else{
             if(v8_sort){
@@ -224,6 +232,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
         for(int cc = 0;cc < smr.shape[2]; cc++) bserial_colidx.push_back(smr.indices[cc] + offset);
         offset = offset + seq.size();
     }
+    cout << "end for" << endl;
     double *bserial_data_arr = new double[bserial_data.size()];
     for(int i = 0;i < bserial_data.size();i++) bserial_data_arr[i] = bserial_data[i];
     int *bserial_colidx_arr = new int[bserial_colidx.size()];

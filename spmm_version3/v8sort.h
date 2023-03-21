@@ -24,6 +24,7 @@ vector<int> get_same_row_lens(vector<int> rlen){
 }
 
 vector<int> gen_panel_list(SpM &mr, int panel_num=0){
+    // mr.check();
     int nnz = mr.indptr[mr.shape[0]];
     int row = mr.shape[0];
     if(panel_num == 0)
@@ -203,6 +204,7 @@ SpM transpose_v8(SpM &mr, vector<int> spv8_list, int panelsize=2*1024){
 }
 
 SpM transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, vector<int> panelsize_list){
+    // cout << "enter transpose_spv8_nnz" << endl;
     auto rowptr = mr.indptr;
 
     // cout << "rowptr:\n";
@@ -211,15 +213,17 @@ SpM transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, vector<int> panelsize_lis
     auto colidx = mr.indices;
     auto data = mr.data;
     auto new_rowptr = mr.indptr;
-    int* new_colidx = new int[mr.shape[0]];
+    int* new_colidx = new int[mr.shape[2]];
     int new_colidx_tail = 0;
-    double* new_data = new double[mr.shape[0]];
+    double* new_data = new double[mr.shape[2]];
     int new_data_tail = 0;
     int base = 0;
     int times = 0;
     int times1 = 0;
     int times2 = 0;
+    // cout << spv8_list.size() << endl;
     for(int i = 0; i < (int)(spv8_list.size()); i++){
+        // cout << i << endl;
         int count = spv8_list[i];
         int panelsize = panelsize_list[i+1] - panelsize_list[i];
         for(int row_index = base; row_index < base + count; row_index += 8){
@@ -252,27 +256,29 @@ SpM transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, vector<int> panelsize_lis
             delete[] add_data;
             delete[] add_colidx;
         }
+        // cout << "end for" << endl;
         if(i == (int)(spv8_list.size()-1)){
+            // cout << "if" << endl;
             int row_begin = base + count;
             int nnz_begin = rowptr[row_begin];
 
             // cout << "row_begin = " << row_begin << endl;
             // cout << "nnz_begin = " << nnz_begin << endl;
             // cout << "data_size = " << data.size() << endl;
-
-            for(int k = nnz_begin; k < (int)(mr.shape[2]); k++){
+            for(int k = nnz_begin; k < mr.shape[2]; k++){
                 new_data[new_data_tail] = data[k];
                 new_data_tail++;
                 // new_data.push_back(data[k]);
             }
-            for(int k = nnz_begin; k < (int)(mr.shape[2]); k++){
+            // cout << "000" << endl;
+            for(int k = nnz_begin; k < (mr.shape[2]); k++){
                 times1++;
                 new_colidx[new_colidx_tail++] = colidx[k];
                 // new_colidx.push_back(colidx[k]);
             }
 
             // cout << "type 2, " << new_colidx.size() << endl;
-            
+            // cout << "end if" << endl;
         }
         else{
             int row_begin = base + count;
@@ -293,6 +299,7 @@ SpM transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, vector<int> panelsize_lis
         }
         base += panelsize;
     }
+    // cout << "end for" << endl;
     SpM new_mr(new_data, new_colidx, new_rowptr, mr.shape);
     delete[] new_data, new_colidx;
     return new_mr;
