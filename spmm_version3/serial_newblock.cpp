@@ -12,6 +12,7 @@
 
 #define MAXLENGTH 10000000
 #define SECT 2048
+#define MAXREGION 20
 bool origin = 1;
 
 using namespace std;
@@ -135,13 +136,14 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 
     int panel_size = 2048;
 
-    vector<SpM> regions;
+    SpM* regions = new SpM[MAXREGION];
+    int regions_length = 0;
     vector<int> bsize_list{0};
 
-    cout<<"enter gen_new_panels"<<endl;
+    // cout<<"enter gen_new_panels"<<endl;
     // cout << mr_bitmap.shape[0] << ' ' << mr_bitmap.shape[1] << ' ' << mr_bitmap.shape[2] << endl;
-    gen_new_panels(mr_bitmap,regions,bsize_list,bnum);
-    cout<<"out gen_new_panels"<<endl;
+    regions_length = gen_new_panels(mr_bitmap,regions,bsize_list,bnum);
+    // cout<<"out gen_new_panels"<<endl;
     // regions[0].check();
 
     int cnt = 0;
@@ -149,10 +151,12 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     vector<vector<int>> panelsize_list;
     vector<vector<int>> seq_order;
 
-    for(int index = 0;index < regions.size();index++){
+    for(int index = 0;index < regions_length;index++){
+        cout<<"loop"<<index<<endl;
         vector<int> seq_v8;
         vector<int> spv8_list;
         if(v8){
+            cout<<"111"<<endl;
             vector<int> add_panelsize_list;
             //返回一个add_panelsize_list的长度
             add_panelsize_list = gen_panel_list(regions[index]);
@@ -162,9 +166,15 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
             int *seq_v8_arr = new int[seq_v8.size()];
             for(int i = 0;i < seq_v8.size();i++) seq_v8_arr[i] = seq_v8[i];
 
+            for(int i = 0;i < seq_v8.size();i++) cout<<seq_v8_arr[i]<<" ";
+
+            cout<<endl<<"222"<<endl;
+
             SpM tmp_r = reorder_row(regions[index],seq_v8_arr);
 
-            delete[] seq_v8_arr;seq_v8_arr = NULL;
+            // delete[] seq_v8_arr;seq_v8_arr = NULL;
+
+            cout<<"333"<<endl;
 
             regions[index] = transpose_spv8_nnz(tmp_r,spv8_list,add_panelsize_list);
             tmp_r.check();
@@ -172,6 +182,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
             vector<int> ex_in;            
             ex_in.assign(add_panelsize_list.begin(),add_panelsize_list.end()-1);
             panelsize_list.push_back(ex_in);
+            cout<<"444"<<endl;
         }
         else{
             if(v8_sort){
@@ -221,6 +232,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     for(int i = 0;i < bserial_indptr.size();i++) bserial_indptr_arr[i] = bserial_indptr[i];
 
     smr_out = SpM(bserial_data_arr,bserial_colidx_arr,bserial_indptr_arr,mr.shape);
+    // smr_out.check();
 
     delete[] bserial_data_arr; bserial_data_arr = NULL;
     delete[] bserial_colidx_arr; bserial_colidx_arr = NULL;
@@ -246,7 +258,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 
 int main(){
     vector<string> mlist;
-    ifstream file("matrix.txt");
+    ifstream file("D:\\Users\\Desktop\\learning in XJTU\\VSCodeC++\\Spmm\\matrix.txt");
     string s;
     while(getline(file,s)){
         mlist.push_back(s);
@@ -255,7 +267,7 @@ int main(){
     for(auto mlist_iter = mlist.begin();mlist_iter != mlist.end();mlist_iter++){
         string mname = *mlist_iter;
         mname = get_mname(mname);
-        string path1 = "mat/mtx/";
+        string path1 = "D:\\Users\\Desktop\\learning in XJTU\\VSCodeC++\\Spmm\\mat\\mtx\\";
         string path2 = "/";
         string path3 = ".mtx";
         string mpath = path1+mname+path2+mname+path3;
