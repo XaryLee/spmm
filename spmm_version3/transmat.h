@@ -33,7 +33,7 @@ SpM reorder_row(SpM &mtx, int* seq){
     return mr;
 }
 
-int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
+int gen_new_panels(SpM &mtx, SpM* plist, vector<int> &psize_list, int &bnum){
 
     // 返回值是plist的长度
 
@@ -57,8 +57,8 @@ int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
     for(int index = 0; index < mtx.shape[0]; index++ ){
 
         // cout << "enter for" << endl;
-        if(index % 10000 == 0)
-            cout << index << endl;
+        // if(index % 10000 == 0)
+        //     cout << index << endl;
         // if(counter % 10000 == 0)
         //     cout << counter << endl;
 
@@ -80,13 +80,13 @@ int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
         }
         if(counter >= threshold){
 
-            cout << "if" << endl;
+            // cout << "if" << endl;
 
             // element_array.resize(mtx.shape[1],0);
             delete[] element_array; element_array = NULL;
             element_array = new bool[mtx.shape[1]]();
 
-            cout << "000" << endl;
+            // cout << "000" << endl;
 
             counter = 0;
             psize_list.push_back(index + 1);
@@ -102,7 +102,7 @@ int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
             // vector<int> p_indptr(beg, end);
             // p_nnz = mtx.data[p_indptr[0]:p_indptr[-1]]
 
-            cout << "111" << endl;
+            // cout << "111" << endl;
 
             dbeg = mtx.data + p_indptr[0];
             dend = mtx.data + p_indptr[p_indptr_len-1];
@@ -113,7 +113,7 @@ int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
             // vector<double> p_nnz(dbeg, dend);
             // p_indices = mtx.indices[p_indptr[0]:p_indptr[-1]]
 
-            cout << "222" << endl;
+            // cout << "222" << endl;
 
             beg = mtx.indices + p_indptr[0];
             end = mtx.indices + p_indptr[p_indptr_len-1];
@@ -127,30 +127,31 @@ int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
                 p_indptr[i] -= offset;
             // pm = scipy.sparse.csr_matrix((p_nnz, p_indices, p_indptr), shape=(psize_list[-1]-psize_list[-2], mtx.shape[1]))
 
-            cout << "333" << endl;
+            // cout << "333" << endl;
 
             int pm_shape[3];
             pm_shape[0] = *(psize_list.end() - 1) - *(psize_list.end() - 2);
             // cout << "333" << endl;
             pm_shape[1] = mtx.shape[1];
             pm_shape[2] = dend - dbeg;
-            cout << pm_shape[0] << ' ' << pm_shape[1] << ' ' << pm_shape[2] << endl;
+            // cout << pm_shape[0] << ' ' << pm_shape[1] << ' ' << pm_shape[2] << endl;
             SpM pm(p_nnz, p_indices, p_indptr, pm_shape);
-            pm.check(false);
+            // pm.check(false);
             delete[] p_nnz, p_indices, p_indptr;
-            cout << "444" << endl;
+            // cout << "444" << endl;
             // plist.push_back(pm);
             plist[tail++] = pm;
-            cout << "end if" << endl;
+            // cout << "end if" << endl;
         }
     }
     delete[] row_indices, element_array;
     row_indices = NULL; element_array = NULL;
 
-    cout << "end for" << endl;
+    // cout << "end for" << endl;
 
     psize_list.push_back(mtx.shape[0]);
     // p_indptr = mtx.indptr[psize_list[-2]:psize_list[-1]+1]
+    // cout << "000" << endl;
     beg = mtx.indptr + *(psize_list.end() - 2);
     end = mtx.indptr + *(psize_list.end() - 1) + 1;
     int p_indptr_len = end - beg;
@@ -178,13 +179,14 @@ int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
     int pm_shape[3];
     pm_shape[0] = *(psize_list.end() - 1) - *(psize_list.end() - 2);
     pm_shape[1] = mtx.shape[1];
-    pm_shape[2] = mtx.shape[2];
+    pm_shape[2] = dend - dbeg;
     SpM pm(p_nnz, p_indices, p_indptr, pm_shape);
     delete[] p_nnz, p_indices, p_indptr;
     // plist.push_back(pm);
+    cout << "000" << endl;
     plist[tail++] = pm;
     bnum = psize_list.size() - 1;
-    cout << "the number of blocks is" << bnum << endl;
+    cout << "the number of blocks is " << bnum << endl;
     return tail;
 }
 

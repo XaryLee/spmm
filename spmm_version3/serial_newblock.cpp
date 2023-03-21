@@ -152,11 +152,11 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     vector<vector<int>> seq_order;
 
     for(int index = 0;index < regions_length;index++){
-        cout<<"loop"<<index<<endl;
+        // cout<<"loop"<<index<<endl;
         vector<int> seq_v8;
         vector<int> spv8_list;
         if(v8){
-            cout<<"111"<<endl;
+            // cout<<"111"<<endl;
             vector<int> add_panelsize_list;
             //返回一个add_panelsize_list的长度
             add_panelsize_list = gen_panel_list(regions[index]);
@@ -166,7 +166,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
             int *seq_v8_arr = new int[seq_v8.size()];
             for(int i = 0;i < seq_v8.size();i++) seq_v8_arr[i] = seq_v8[i];
 
-            for(int i = 0;i < seq_v8.size();i++) cout<<seq_v8_arr[i]<<" ";
+            // for(int i = 0;i < seq_v8.size();i++) cout<<seq_v8_arr[i]<<" ";
 
             cout<<endl<<"222"<<endl;
 
@@ -177,7 +177,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
             cout<<"333"<<endl;
 
             regions[index] = transpose_spv8_nnz(tmp_r,spv8_list,add_panelsize_list);
-            tmp_r.check();
+            // tmp_r.check();
 
             vector<int> ex_in;            
             ex_in.assign(add_panelsize_list.begin(),add_panelsize_list.end()-1);
@@ -258,7 +258,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 
 int main(){
     vector<string> mlist;
-    ifstream file("D:\\Users\\Desktop\\learning in XJTU\\VSCodeC++\\Spmm\\matrix.txt");
+    ifstream file("matrix.txt");
     string s;
     while(getline(file,s)){
         mlist.push_back(s);
@@ -267,7 +267,7 @@ int main(){
     for(auto mlist_iter = mlist.begin();mlist_iter != mlist.end();mlist_iter++){
         string mname = *mlist_iter;
         mname = get_mname(mname);
-        string path1 = "D:\\Users\\Desktop\\learning in XJTU\\VSCodeC++\\Spmm\\mat\\mtx\\";
+        string path1 = "mat/mtx/";
         string path2 = "/";
         string path3 = ".mtx";
         string mpath = path1+mname+path2+mname+path3;
