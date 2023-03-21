@@ -7,10 +7,11 @@
 #include "csr.h"
 #include "bitmap.h"
 #include "transmat.h"
-#include "v8_sort.h"
+#include "v8sort.h"
 // #include "wbsort.h"
 
 #define MAXLENGTH 10000000
+#define SECT 2048
 bool origin = 1;
 
 using namespace std;
@@ -110,13 +111,17 @@ void gen_serail(SpM &mr,SpM &new_mr,unordered_map<int,int> &seq_dict){
 
 void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<int> &sseq,SpM &smr_out,int &bnum,bool bitmap= 0,bool v8= 0,bool v8_sort= 0,bool serial= 0){
     int* seq_bitmap = new int;
-    SpM mr_bitmap;
+    // SpM mr_bitmap;
     if(bitmap){
-        int sect = 8;
+        int sect = SECT;
         seq_bitmap = bitmap_reorder(mr,sect);
-        mr_bitmap = reorder_row(mr,seq_bitmap);
+        // SpM &mr_bitmap = reorder_row(mr,seq_bitmap);
+        // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
+        // cout << reorder_row(mr,seq_bitmap).shape[0] << ' ' << reorder_row(mr,seq_bitmap).shape[1] << ' ' << reorder_row(mr,seq_bitmap).shape[2] << endl;
+        // cout << mr_bitmap.shape[0] << ' ' << mr_bitmap.shape[1] << ' ' << mr_bitmap.shape[2] << endl;
     }
     else for(int i = 0;i < sizeof(seq_bitmap)/sizeof(*seq_bitmap);i++) seq_bitmap[i]=i;
+    SpM mr_bitmap = reorder_row(mr,seq_bitmap);
     // mr_bitmap.check();
     // for(int i = 0;i < mr.shape[0];i++) cout << seq_bitmap[i]<<" ";
 
@@ -134,9 +139,10 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     vector<int> bsize_list{0};
 
     cout<<"enter gen_new_panels"<<endl;
+    // cout << mr_bitmap.shape[0] << ' ' << mr_bitmap.shape[1] << ' ' << mr_bitmap.shape[2] << endl;
     gen_new_panels(mr_bitmap,regions,bsize_list,bnum);
     cout<<"out gen_new_panels"<<endl;
-    regions[0].check();
+    // regions[0].check();
 
     int cnt = 0;
     vector<vector<int>> spv8_lists;
@@ -240,7 +246,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 
 int main(){
     vector<string> mlist;
-    ifstream file("D:\\Users\\Desktop\\learning in XJTU\\VSCodeC++\\Spmm\\matrix.txt");
+    ifstream file("matrix.txt");
     string s;
     while(getline(file,s)){
         mlist.push_back(s);
@@ -249,7 +255,7 @@ int main(){
     for(auto mlist_iter = mlist.begin();mlist_iter != mlist.end();mlist_iter++){
         string mname = *mlist_iter;
         mname = get_mname(mname);
-        string path1 = "D:\\Users\\Desktop\\learning in XJTU\\VSCodeC++\\Spmm\\mat\\mtx\\";
+        string path1 = "mat/mtx/";
         string path2 = "/";
         string path3 = ".mtx";
         string mpath = path1+mname+path2+mname+path3;

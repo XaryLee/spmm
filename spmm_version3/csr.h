@@ -13,6 +13,7 @@ public:
     SpM(double*, int*, int*, int*);
     SpM(){}
     ~SpM();
+    // void operator=(const SpM &);
     void check(bool);
 };
 
@@ -39,6 +40,13 @@ SpM::SpM(double* data, int* indices, int* indptr, int* shape){
     memcpy(this->indptr, indptr, sizeof(*indptr)*(shape[0]+1));
     memcpy(this->shape, shape, sizeof(*shape)*3);
 }
+
+// void SpM::operator=(const SpM &mr){
+//     memcpy(data, mr.data, sizeof(*data)*shape[2]);
+//     memcpy(indices, mr.indices, sizeof(*indices)*shape[2]);
+//     memcpy(indptr, mr.indptr, sizeof(*indptr)*(shape[0]+1));
+//     memcpy(shape, mr.shape, sizeof(*shape)*3);
+// }
 
 SpM::~SpM(){
     delete[] data;
