@@ -14,7 +14,7 @@ SpM reorder_row(SpM &mtx, int* seq){
     // for(int i = 0; i < min(100, mtx.shape[0]); i++)
     //     cout << seq[i] << ' ';
     // cout << endl;
-    
+    cout << mtx.shape[2] << endl;
     double* nnz = new double[mtx.shape[2]];
     int* colidx = new int[mtx.shape[2]];
     int* rowptr = new int[mtx.shape[0]+1]();
@@ -26,21 +26,41 @@ SpM reorder_row(SpM &mtx, int* seq){
         if(i % 10000 == 0)
             cout << i << endl;
         int s = seq[i];
+        // cout<<"(i,s)"<<i<<" "<<s<<endl;
         if(mtx.indptr[s] == mtx.indptr[s+1]){
             // cout << "if" << endl;
             rowptr[rowptr_tail] = rowptr[rowptr_tail-1];
             rowptr_tail++;
         }
         else{
-            // cout << "else" << endl;
+            // cout << "else" <<" ";
             rowptr[rowptr_tail] = (rowptr[rowptr_tail-1] + (mtx.indptr[s+1] - mtx.indptr[s]));
             rowptr_tail++;
+            // cout<< "c1"<<" "<<mtx.indptr[s]<<" "<<mtx.indptr[s+1]<<" ";
             for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
-                nnz[tail] = (mtx.data[j]);
-                colidx[tail] = (mtx.indices[j]);
-                tail++;
+                // if(tail<258535 && tail > 200000) cout<<tail<<" ";
+                if(tail == 228856){
+                    cout<<"enter228856"<<endl;
+                    cout<<mtx.data[j]<<" "<<mtx.indices[j]<<endl;
+                    cout<<"000"<<endl;
+                    colidx[tail] = mtx.indices[j];
+                    cout<<"111"<<endl;
+                    // for(int k = 0;k<tail;k++) if(nnz[k]!=1) cout<<tail<<endl;
+                    nnz[tail] = mtx.data[j];
+                    cout<<"222"<<endl;
+                    tail++;
+                    cout<<"333"<<endl;
+                }
+                else{
+                    nnz[tail] = mtx.data[j];
+                    colidx[tail] = mtx.indices[j];
+                    tail++;
+                }
+
+                // cout<<tail<<" "<<mtx.shape[2]<<endl;
                 // 这里可以用memcpy加速
             }
+            // cout<<"c2"<<endl;
         }
     }
     cout << "end for" << endl;
@@ -50,6 +70,51 @@ SpM reorder_row(SpM &mtx, int* seq){
     // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
     return mr;
 }
+
+SpM reorder_row_test(SpM &mtx, int* seq){
+    // len(seq) = mtx.shape[0]
+    // mtx.check();
+
+    // cout << "seq: " << endl;
+    // for(int i = 0; i < min(100, mtx.shape[0]); i++)
+    //     cout << seq[i] << ' ';
+    // cout << endl;
+    
+    double* nnz = new double[mtx.shape[2]];
+    int* colidx = new int[mtx.shape[2]];
+    int* rowptr = new int[mtx.shape[0]+1]();
+    int tail = 0;
+    int rowptr_tail = 0;
+    rowptr[rowptr_tail++] = 0;
+    cout << "for" << endl;
+        int i = 14806;
+        int s = seq[i];
+        cout<<"(i,s)"<<i<<" "<<s<<endl;
+        if(mtx.indptr[s] == mtx.indptr[s+1]){
+            cout << "if" << endl;
+            rowptr[rowptr_tail] = rowptr[rowptr_tail-1];
+            rowptr_tail++;
+        }
+        else{
+            cout << "else" << endl;
+            rowptr[rowptr_tail] = (rowptr[rowptr_tail-1] + (mtx.indptr[s+1] - mtx.indptr[s]));
+            rowptr_tail++;
+            for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
+                nnz[tail] = (mtx.data[j]);
+                colidx[tail] = (mtx.indices[j]);
+                tail++;
+                // 这里可以用memcpy加速
+            }
+        }
+    
+    cout << "end for" << endl;
+    SpM mr(nnz, colidx, rowptr, mtx.shape);
+    // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
+    delete[] nnz, colidx, rowptr;
+    // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
+    return mr;
+}
+
 
 int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
 
