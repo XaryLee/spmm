@@ -2,6 +2,7 @@
 #define _TRANSMAT_H_
 #include <iostream>
 #include <vector>
+#include <cstring>
 #include "csr.h"
 
 using namespace std;
