@@ -104,6 +104,9 @@ void panel_sort_nnz(vector<int>& out_seq, vector<int>& spv8_list, SpM &mr, vecto
     vector<int> pseq;
     int count, spv8_len;
     for(int j = 0; j < panelsize_list.size() - 1; j++){
+        vector<int>().swap(remain);
+        vector<int>().swap(order);
+        vector<int>().swap(same_len_rows);
         count = 0;
         spv8_len = 0;
         pseq = argsort(vector<int>(seq.begin() + panelsize_list[j], seq.begin() + panelsize_list[j+1]));

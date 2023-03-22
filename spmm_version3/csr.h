@@ -68,10 +68,10 @@ void SpM::operator=(const SpM &mr){
 }
 
 SpM::~SpM(){
-    delete[] data;
-    delete[] indices;
-    delete[] indptr;
-    delete[] shape;
+    delete[] data; data = NULL;
+    delete[] indices; indices = NULL;
+    delete[] indptr; indptr = NULL;
+    delete[] shape; shape = NULL;
 }
 
 void SpM::check(bool show_indptr=true){
