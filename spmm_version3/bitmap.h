@@ -16,7 +16,7 @@ int** get_scoreboard(SpM &mr, int sectsize){
     int sectnum = ceil(mr.shape[1]/sectsize);
     int* nn;
     // cout<<mr.shape[0]<<mr.shape[1]<<mr.shape[2];
-    cout << "Bitmap Sections = " << sectnum << endl;
+    // cout << "Bitmap Sections = " << sectnum << endl;
     // cout<<"000"<<mr.shape[0]<<endl;
     for(int i = 0; i < mr.shape[0]; i++){
         // cout<<1<<endl;
@@ -98,7 +98,7 @@ int* gen_bitorder(int** const &scores, int sectsize, SpM &mr){
 }
 
 int* bitmap_reorder(SpM &mr, int sectsize){
-    cout << "bitmap_reorder" << endl;
+    // cout << "bitmap_reorder" << endl;
     auto scores = get_scoreboard(mr, sectsize);
     auto row_seq = gen_bitorder(scores, sectsize, mr);
     auto nrows = mr.shape[0];
@@ -109,7 +109,7 @@ int* bitmap_reorder(SpM &mr, int sectsize){
     }
     delete[] scores;
     scores = NULL;
-    cout << "delete done" << endl;
+    // cout << "delete done" << endl;
     // int sectnum = ceil(mr.shape[1]/sectsize);
     // for(auto &score:scores){
     //     delete[] score;

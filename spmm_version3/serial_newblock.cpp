@@ -4,6 +4,7 @@
 #include<fstream>
 #include<map>
 #include<unordered_map>
+#include<ctime>
 #include "csr.h"
 #include "bitmap.h"
 #include "transmat.h"
@@ -168,8 +169,8 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     // SpM mr_bitmap;
     if(bitmap){
         int sect = SECT;
-        cout << "mr_indptr: " << mr.indptr[mr.shape[0]] << endl;
-        mr.check(false);
+        // cout << "mr_indptr: " << mr.indptr[mr.shape[0]] << endl;
+        // mr.check(false);
         seq_bitmap = bitmap_reorder(mr,sect);
         // SpM &mr_bitmap = reorder_row(mr,seq_bitmap);
         // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
@@ -334,6 +335,9 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 }
 
 int main(){
+    clock_t process_start;
+    clock_t process_end;
+    clock_t main_start = clock();
     vector<string> mlist;
     ifstream file("matrix.txt");
     string s;
@@ -350,7 +354,7 @@ int main(){
         string mpath = path1+mname+path2+mname+path3;
         SpM mr = csr_matrix(mpath);
 
-        mr.check(false);
+        // mr.check(false);
 
         // cout << "check csr_matrix" << endl;
         // mr.check();
@@ -361,16 +365,20 @@ int main(){
         vector<int> rseq;
         int bnum;
         SpM smr;
-
+        process_start = clock();
         gen_trace_formats(mr,seq,rseq,sseq,smr,bnum,1,1,0,1);
+        process_end = clock();
         cout<<"done"<<endl;
-        if(sseq.empty()) cout<<"empty";
+        // if(sseq.empty()) cout<<"empty";
         // else{
         // for(int i = 0;i<sseq.size();i++){
         //     cout<<sseq[i]<<" ";
         // }}
     }
-    system("pause");
+    clock_t main_end = clock();
+    cout << "main time: " << static_cast<double>(main_end-main_start) / CLOCKS_PER_SEC << endl;
+    cout << "process time: " << static_cast<double>(process_end-process_start) / CLOCKS_PER_SEC << endl;
+    // system("pause");
 
     return 0;
     }

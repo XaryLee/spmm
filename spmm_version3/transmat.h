@@ -134,7 +134,7 @@ int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
     // psize_list = [0]
     //!!!!!
     // for(auto i:mtx.indptr) cout<<i<<" ";
-    cout << "enter gen_new_panels" << endl;
+    // cout << "enter gen_new_panels" << endl;
     int tail = 0;
     int threshold = 512 * 1024 / 8; //65536
     // int threshold = 4;
@@ -279,7 +279,7 @@ int gen_new_panels(SpM &mtx, SpM* &plist, vector<int> &psize_list, int &bnum){
     // cout << "000" << endl;
     plist[tail++] = pm;
     bnum = psize_list.size() - 1;
-    cout << "the number of blocks is " << bnum << endl;
+    // cout << "the number of blocks is " << bnum << endl;
     return tail;
 }
 

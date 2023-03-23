@@ -40,13 +40,13 @@ vector<int> gen_panel_list(SpM &mr, int panel_num=0){
             panel_list.push_back(i);
         }
     panel_list.push_back(row);
-    cout << "the correct number of panels is " << panel_num << endl;
-    cout << "the true number of panels is " << panel_list.size() - 1 << endl;
+    // cout << "the correct number of panels is " << panel_num << endl;
+    // cout << "the true number of panels is " << panel_list.size() - 1 << endl;
     return panel_list;
 }
 
 void panel_sort(vector<int>& out_seq, vector<int>& spv8_list, SpM &mr, int panelsize = 2 * 1024){
-    cout << "Sort Panel Size " << panelsize << endl;
+    // cout << "Sort Panel Size " << panelsize << endl;
     auto seq = get_row_lens(mr);
     int pnum = (int)(seq.size() / panelsize);
     int iterations = 0;
