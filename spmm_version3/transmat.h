@@ -27,7 +27,7 @@ SpM reorder_row(SpM &mtx, int* seq){
     int tail = 0;
     int rowptr_tail = 0;
     rowptr[rowptr_tail++] = 0;
-    cout << "for" << endl;
+    // cout << "for" << endl;
     for(int i = 0; i < mtx.shape[0]; i++){
         // if(i % 10000 == 0)
         //     cout << i << endl;
@@ -96,7 +96,7 @@ SpM reorder_row_test(SpM &mtx, int* seq){
     int tail = 0;
     int rowptr_tail = 0;
     rowptr[rowptr_tail++] = 0;
-    cout << "for" << endl;
+    // cout << "for" << endl;
         int i = 14806;
         int s = seq[i];
         cout<<"(i,s)"<<i<<" "<<s<<endl;

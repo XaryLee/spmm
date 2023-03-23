@@ -8,7 +8,7 @@
 #include "bitmap.h"
 #include "transmat.h"
 #include "v8sort.h"
-// #include "wbsort.h"
+#include "wbsort.h"
 
 #define MAXLENGTH 10000000
 #define SECT 2048
@@ -27,6 +27,56 @@ string get_mname(string origin_name){
     return mname;
 }
 
+// SpM csr_matrix(string path){
+//     ifstream file(path);
+//     int num_row, num_col, num_lines;
+//     while (file.peek() == '%') file.ignore(2048, '\n');
+
+//     file >> num_row>> num_col >> num_lines;
+//     int shape[3];
+//     shape[0]=num_row;
+//     shape[1]=num_col;
+//     shape[2]=num_lines;
+
+//     int* indices = new int[num_lines];
+//     int* indptr = new int[num_row+1];
+//     indptr[0] = 0;
+//     double* data = new double[num_lines];
+//     int cnt = 1;
+//     int times = 0;
+//     int index = 1;
+//     for (int l = 0; l < num_lines; l++)
+//     {
+//         data[l] = 1;
+//         int row, col;
+//         file >> row >> col;
+//         indices[l] = row - 1;
+//         if(cnt != int(col)||l == num_lines - 1){
+//             if(cnt != int(col)&&cnt != int(col) - 1){
+//                 int div = col - cnt - 1;
+//                 for(int i = 0;i < div;i++){
+//                     indptr[index++] = indptr[index - 1];
+//                     cnt++;
+//                 }
+//             }
+//             if(index != num_col) indptr[index++] = indptr[index - 1] + times;
+//             times = 0;
+//             cnt++;
+//         }
+//         times++;
+//     }
+//     indptr[index++] = shape[2];
+//     // for(int i=0;i<41;i++) cout<<indptr[i]<<" ";
+//     // cout <<endl<< index << ' ' << shape[2] << endl;
+//     file.close();
+//     auto mr = SpM(data,indices,indptr,shape);
+//     delete[] data; data = NULL;
+//     delete[] indices; indices = NULL;
+//     delete[] indptr; indptr = NULL;
+//     // cout<<mr.shape[0]<<mr.shape[1];
+//     return mr;
+// }
+
 SpM csr_matrix(string path){
     ifstream file(path);
     int num_row, num_col, num_lines;
@@ -37,43 +87,44 @@ SpM csr_matrix(string path){
     shape[0]=num_row;
     shape[1]=num_col;
     shape[2]=num_lines;
-
+    
     int* indices = new int[num_lines];
+    int* row_ = new int [num_lines];
+    int* col_ = new int [num_lines];
     int* indptr = new int[num_row+1];
-    indptr[0] = 0;
+    int* rowlen = new int [num_row];
     double* data = new double[num_lines];
-    int cnt = 1;
-    int times = 0;
-    int index = 1;
+    
+    for (int i = 0; i < num_row; i++)rowlen[i] = 0;
+    indptr[0] = 0;
     for (int l = 0; l < num_lines; l++)
     {
         data[l] = 1;
         int row, col;
         file >> row >> col;
-        indices[l] = row - 1;
-        if(cnt != int(col)||l == num_lines - 1){
-            if(cnt != int(col)&&cnt != int(col) - 1){
-                int div = col - cnt - 1;
-                for(int i = 0;i < div;i++){
-                    indptr[index++] = indptr[index - 1];
-                    cnt++;
-                }
-            }
-            if(index != num_col) indptr[index++] = indptr[index - 1] + times;
-            times = 0;
-            cnt++;
-        }
-        times++;
+        rowlen[row-1] +=1;
+        row_[l] = row-1;
+        col_[l] = col-1;
     }
-    indptr[index++] = shape[2];
-    // for(int i=0;i<41;i++) cout<<indptr[i]<<" ";
-    // cout <<endl<< index << ' ' << shape[2] << endl;
     file.close();
+    for(int i = 1; i < num_row; i++){indptr[i] = rowlen[i-1]+indptr[i-1];rowlen[i-1] = 0;}
+    rowlen[num_row-1]=0;
+    indptr[num_row] = shape[2];
+    for (int i =0; i<num_lines ; i++)
+    {
+        indices[indptr[row_[i]]+rowlen[row_[i]]]=col_[i];
+        rowlen[row_[i]] +=1;
+    }
+    // for(int i=0;i<(num_lines);i++) cout<<indices[i]<<" ";//this line is checked
     auto mr = SpM(data,indices,indptr,shape);
     delete[] data; data = NULL;
     delete[] indices; indices = NULL;
+    delete[] rowlen; rowlen = NULL;
+    delete[] col_; col_=NULL;
     delete[] indptr; indptr = NULL;
-    // cout<<mr.shape[0]<<mr.shape[1];
+    delete[] row_; row_=NULL;
+    // cout <<endl<< row_[40] << ' ' << shape[2] << endl;
+    // 
     return mr;
 }
 
@@ -258,20 +309,25 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     delete[] bserial_data_arr; bserial_data_arr = NULL;
     delete[] bserial_colidx_arr; bserial_colidx_arr = NULL;
     delete[] bserial_indptr_arr; bserial_indptr_arr = NULL;
-    // //这里是要一维的数组
-    // vector<vector<int>> seq_temp = SerialSort_block(seq_bitmap,seq_v8_block,bseq_list,seq_order);
-    // seq_input.resize(0);
-    // for(auto i = seq_temp.begin();i != seq_temp.end();i++){
-    //     for(auto j = i->begin();j != i->end();j++){
-    //         seq_input.push_back(*j);
-    //     }
-    // }
-    // rseq = SeqReverse(gen_rseq(seq_bitmap,seq_v8_block));
-    // sseq.resize(0);
-    // cnt = 0;
-    // for(auto k : seq_order[cnt]){
-    //     sseq.push_back(k);
-    // }
+    //这里是要一维的数组
+    vector<vector<int>> seq_temp = SerialSort_block(seq_bitmap,seq_v8_block,bseq_list,seq_order);
+    seq_input.resize(0);
+    for(auto i = seq_temp.begin();i != seq_temp.end();i++){
+        for(auto j = i->begin();j != i->end();j++){
+            seq_input.push_back(*j);
+        }
+    }
+    int* seq_row = gen_rseq(seq_bitmap,seq_v8_block);
+    int* rseq_arr;
+    rseq_arr = SeqReverse(seq_row, seq_v8_block.size());
+    delete[] seq_row; seq_row = NULL;
+    rseq = vector<int>(rseq_arr, rseq_arr + seq_v8_block.size());
+    delete[] rseq_arr; rseq_arr = NULL;
+    sseq.resize(0);
+    cnt = 0;
+    for(auto k : seq_order[cnt]){
+        sseq.push_back(k);
+    }
 
     delete[] seq_bitmap; seq_bitmap = NULL;
 
@@ -309,10 +365,10 @@ int main(){
         gen_trace_formats(mr,seq,rseq,sseq,smr,bnum,1,1,0,1);
         cout<<"done"<<endl;
         if(sseq.empty()) cout<<"empty";
-        else{
-        for(int i = 0;i<sseq.size();i++){
-            cout<<sseq[i]<<" ";
-        }}
+        // else{
+        // for(int i = 0;i<sseq.size();i++){
+        //     cout<<sseq[i]<<" ";
+        // }}
     }
     system("pause");
 
