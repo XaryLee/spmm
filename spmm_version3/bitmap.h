@@ -5,6 +5,7 @@
 #include <math.h>
 #include <algorithm>
 #include <numeric>
+#include <ctime>
 #include "csr.h"
 
 using namespace std;
@@ -15,19 +16,20 @@ int** get_scoreboard(SpM &mr, int sectsize){
     int** board = new int*[shape];
     int sectnum = ceil(mr.shape[1]/sectsize);
     int* nn;
+    int* score;
+    int beg, end;
     // cout<<mr.shape[0]<<mr.shape[1]<<mr.shape[2];
     // cout << "Bitmap Sections = " << sectnum << endl;
     // cout<<"000"<<mr.shape[0]<<endl;
     for(int i = 0; i < mr.shape[0]; i++){
         // cout<<1<<endl;
         // size(score) = sectnum
-        int* score = new int[sectnum]();
+        score = new int[sectnum]();
         if(mr.indptr[i] == mr.indptr[i+1]){
             board[i] = score;
             continue;
         }
         // cout<<2<<endl;
-        int beg, end;
         // for n in mr.indices[mr.indptr[i]:mr.indptr[i+1]]
         beg = mr.indptr[i];
         end = mr.indptr[i+1];
@@ -81,11 +83,14 @@ int* gen_bitorder(int** const &scores, int sectsize, SpM &mr){
     // cout << "gen_bitorder" << endl;
     int nrows = mr.shape[0]; // 行数
     int* bitseq = new int[nrows];
+    int bint;
     // cout<<0<<endl;
+    clock_t beg = clock();
     for(int i = 0; i < nrows; i++){
         // cout<<1<<endl;
         // auto score = scores[i];
-        int bint = blur(scores[i], sectsize, mr);
+        bint = blur(scores[i], sectsize, mr);
+        // bint = 0;
         // cout<<2<<endl;
         // cout << bint << endl;
         // cout<<3<<endl;
@@ -93,14 +98,21 @@ int* gen_bitorder(int** const &scores, int sectsize, SpM &mr){
         bitseq[i] = bint;
         // cout<<4<<endl;
         }
+    clock_t end = clock();
+    cout << "gen_bitorder for time: " << (double)(end - beg) / CLOCKS_PER_SEC << endl;
     // cout << "end for" << endl;
     return argsort(bitseq, nrows);
 }
 
 int* bitmap_reorder(SpM &mr, int sectsize){
     // cout << "bitmap_reorder" << endl;
+    clock_t get_scoreboard_beg = clock();
     auto scores = get_scoreboard(mr, sectsize);
+    clock_t get_scoreboard_end = clock();
     auto row_seq = gen_bitorder(scores, sectsize, mr);
+    clock_t gen_bitorder_end = clock();
+    cout << "get_scoreboard time: " << (double)(get_scoreboard_end - get_scoreboard_beg) / CLOCKS_PER_SEC << endl;
+    cout << "gen_bitorder time: " << (double)(gen_bitorder_end - get_scoreboard_end) / CLOCKS_PER_SEC << endl;
     auto nrows = mr.shape[0];
     for(int i = 0; i < nrows; i++){
         // cout << scores[i][0] << endl;
