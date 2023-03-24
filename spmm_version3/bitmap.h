@@ -2,6 +2,7 @@
 #define _BITMAP_H_
 
 #include <iostream>
+#include <vector>
 #include <math.h>
 #include <algorithm>
 #include <numeric>
@@ -49,9 +50,9 @@ int** get_scoreboard(SpM &mr, int sectsize){
     return board;
 }
 
-int blur(int* score, int sectsize, SpM &mr){
+int blur(int* score, int sectnum, SpM &mr){
     // cout << "blur" << endl;
-    int sectnum = ceil(mr.shape[1]/sectsize);
+    // int sectnum = ceil(mr.shape[1]/sectsize);
     // size(score) = sectnum
     int index, max = 0;
     for( int i = 0; i < sectnum; i++ )
@@ -84,12 +85,13 @@ int* gen_bitorder(int** const &scores, int sectsize, SpM &mr){
     int nrows = mr.shape[0]; // 行数
     int* bitseq = new int[nrows];
     int bint;
+    int sectnum = ceil(mr.shape[1]/sectsize);
     // cout<<0<<endl;
     clock_t beg = clock();
     for(int i = 0; i < nrows; i++){
         // cout<<1<<endl;
         // auto score = scores[i];
-        bint = blur(scores[i], sectsize, mr);
+        bint = blur(scores[i], sectnum, mr);
         // bint = 0;
         // cout<<2<<endl;
         // cout << bint << endl;
@@ -104,23 +106,43 @@ int* gen_bitorder(int** const &scores, int sectsize, SpM &mr){
     return argsort(bitseq, nrows);
 }
 
+int* gen_bitorder(SpM &mr, int sectsize){
+    int nrows = mr.shape[0];
+    int sectnum = ceil(mr.shape[1]/sectsize);
+    int* nn;
+    int* score;
+    int beg, end;
+    int* bitseq = new int[nrows];
+    int bint;
+    for(int i = 0; i < nrows; i++){
+        score = new int[sectnum]();
+        if(mr.indptr[i] != mr.indptr[i+1]){
+            beg = mr.indptr[i];
+            end = mr.indptr[i+1];
+            nn = &(mr.indices[beg]);
+            // cout<<3<<endl;
+            for(int j = 0; j < end-beg; j++){
+                int n = nn[j];
+                score[(int)(n/sectsize)] = score[(int)(n/sectsize)] + 1;
+            }
+        }
+        bint = blur(score, sectnum, mr);
+        bitseq[i] = bint;
+        delete[] score;
+    }
+    return argsort(bitseq, nrows);
+}
+
 int* bitmap_reorder(SpM &mr, int sectsize){
     // cout << "bitmap_reorder" << endl;
-    clock_t get_scoreboard_beg = clock();
-    auto scores = get_scoreboard(mr, sectsize);
-    clock_t get_scoreboard_end = clock();
-    auto row_seq = gen_bitorder(scores, sectsize, mr);
-    clock_t gen_bitorder_end = clock();
-    cout << "get_scoreboard time: " << (double)(get_scoreboard_end - get_scoreboard_beg) / CLOCKS_PER_SEC << endl;
-    cout << "gen_bitorder time: " << (double)(gen_bitorder_end - get_scoreboard_end) / CLOCKS_PER_SEC << endl;
-    auto nrows = mr.shape[0];
-    for(int i = 0; i < nrows; i++){
-        // cout << scores[i][0] << endl;
-        delete[] scores[i];
-        scores[i] = NULL;
-    }
-    delete[] scores;
-    scores = NULL;
+    // clock_t get_scoreboard_beg = clock();
+    // auto row_seq = gen_bitorder(mr, sectsize);
+    // clock_t get_scoreboard_end = clock();
+    // auto row_seq = gen_bitorder(scores, sectsize, mr);
+    // clock_t gen_bitorder_end = clock();
+    // cout << "get_scoreboard time: " << (double)(get_scoreboard_end - get_scoreboard_beg) / CLOCKS_PER_SEC << endl;
+    // cout << "gen_bitorder time: " << (double)(gen_bitorder_end - get_scoreboard_end) / CLOCKS_PER_SEC << endl;
+    // auto nrows = mr.shape[0];
     // cout << "delete done" << endl;
     // int sectnum = ceil(mr.shape[1]/sectsize);
     // for(auto &score:scores){
@@ -128,7 +150,30 @@ int* bitmap_reorder(SpM &mr, int sectsize){
     //     score = NULL;
     // }
     // cout<<"length:"<<row_seq.size()<<endl;
-    return row_seq;
+    int nrows = mr.shape[0];
+    int sectnum = ceil(mr.shape[1]/sectsize);
+    int* nn;
+    int* score;
+    int beg, end;
+    int* bitseq = new int[nrows];
+    int bint;
+    for(int i = 0; i < nrows; i++){
+        score = new int[sectnum]();
+        if(mr.indptr[i] != mr.indptr[i+1]){
+            beg = mr.indptr[i];
+            end = mr.indptr[i+1];
+            nn = &(mr.indices[beg]);
+            // cout<<3<<endl;
+            for(int j = 0; j < end-beg; j++){
+                int n = nn[j];
+                score[(int)(n/sectsize)] = score[(int)(n/sectsize)] + 1;
+            }
+        }
+        bint = blur(score, sectnum, mr);
+        bitseq[i] = bint;
+        delete[] score;
+    }
+    return argsort(bitseq, nrows);
 }
 
 #endif
