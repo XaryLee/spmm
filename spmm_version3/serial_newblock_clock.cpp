@@ -199,7 +199,7 @@ void gen_serial_origin(SpM &mr,SpM &new_mr,unordered_map<int,int> &seq_dict,vect
 
 void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<int> &sseq,SpM &smr_out,int &bnum){
 
-    int* seq_bitmap = new int;
+    int* seq_bitmap = new int[mr.shape[0]];
 
     
     
@@ -210,15 +210,20 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     int sect = SECT;
     //cout << "mr_indptr: " << mr.indptr[mr.shape[0]] << endl;//test
     //mr.check(false);//test
-    seq_bitmap = bitmap_reorder(mr,sect);
-    // SpM &mr_bitmap = reorder_row(mr,seq_bitmap);
+
+    // seq_bitmap = bitmap_reorder(mr,sect);
+
+    // SpM mr_bitmap = reorder_row(mr,seq_bitmap);
+    // mr_bitmap.check();
     // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
     // cout << reorder_row(mr,seq_bitmap).shape[0] << ' ' << reorder_row(mr,seq_bitmap).shape[1] << ' ' << reorder_row(mr,seq_bitmap).shape[2] << endl;
     // cout << mr_bitmap.shape[0] << ' ' << mr_bitmap.shape[1] << ' ' << mr_bitmap.shape[2] << endl;
     // auto end_bitmap= high_resolution_clock::now();
     // auto duration_bitmap = duration_cast<microseconds>(end_bitmap - begin_bitmap);
     // time_bitmap +=  double(duration_bitmap.count());
-    SpM mr_bitmap = reorder_row(mr,seq_bitmap);
+
+    SpM mr_bitmap = bitmap_reorder(mr, sect, seq_bitmap);
+    // cout << "done" << endl;
     
     auto end_bitmap= high_resolution_clock::now();
     auto duration_bitmap = duration_cast<microseconds>(end_bitmap - begin_bitmap);
@@ -244,6 +249,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     // cout<<"enter gen_new_panels"<<endl;
     // cout << mr_bitmap.shape[0] << ' ' << mr_bitmap.shape[1] << ' ' << mr_bitmap.shape[2] << endl;
     regions_length = gen_new_panels(mr_bitmap,regions,bsize_list,bnum);
+    // cout << "done" << endl;
     // cout<<"out gen_new_panels"<<endl;
     // regions[0].check();
 
