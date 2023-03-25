@@ -215,6 +215,9 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
     // cout << reorder_row(mr,seq_bitmap).shape[0] << ' ' << reorder_row(mr,seq_bitmap).shape[1] << ' ' << reorder_row(mr,seq_bitmap).shape[2] << endl;
     // cout << mr_bitmap.shape[0] << ' ' << mr_bitmap.shape[1] << ' ' << mr_bitmap.shape[2] << endl;
+    // auto end_bitmap= high_resolution_clock::now();
+    // auto duration_bitmap = duration_cast<microseconds>(end_bitmap - begin_bitmap);
+    // time_bitmap +=  double(duration_bitmap.count());
     SpM mr_bitmap = reorder_row(mr,seq_bitmap);
     
     auto end_bitmap= high_resolution_clock::now();

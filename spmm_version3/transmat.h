@@ -3,81 +3,43 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <ctime>
 #include "csr.h"
 
 using namespace std;
 
 SpM reorder_row(SpM &mtx, int* seq){
-    // len(seq) = mtx.shape[0]
-    // mtx.check();
-
-    // cout << "seq: " << endl;
-    // for(int i = 0; i < min(100, mtx.shape[0]); i++)
-    //     cout << seq[i] << ' ';
-    // cout << endl;
-    // cout << "seq:" << endl;
-    // for(auto i = 0; i < 100; i++)
-    //     cout << seq[i] << ' ';
-    // cout << endl;
-    // cout << mtx.indptr[0] << ' ' << mtx.indptr[mtx.shape[0]] << endl;
-    // cout << mtx.shape[2] << endl;
-    double* nnz = new double[mtx.shape[2]];
-    int* colidx = new int[mtx.shape[2]];
-    int* rowptr = new int[mtx.shape[0]+1]();
+    
+    // double* nnz = new double[mtx.shape[2]];
+    // int* colidx = new int[mtx.shape[2]];
+    // int* rowptr = new int[mtx.shape[0]+1]();
+    SpM mr(mtx.shape);
+    // mr.check(false);
     int tail = 0;
-    int rowptr_tail = 0;
-    rowptr[rowptr_tail++] = 0;
-    // cout << "for" << endl;
+    // int rowptr_tail = 0;
+    // rowptr[rowptr_tail++] = 0;
+    // rowptr[0] = 0;
+    // clock_t time_beg = clock();
     for(int i = 0; i < mtx.shape[0]; i++){
-        // if(i % 10000 == 0)
-        //     cout << i << endl;
         int s = seq[i];
-        // cout<<"(i,s)"<<i<<" "<<s<<endl;
-        if(mtx.indptr[s] == mtx.indptr[s+1]){
-            // cout << "if" << endl;
-            rowptr[rowptr_tail] = rowptr[rowptr_tail-1];
-            rowptr_tail++;
-        }
-        else{
-            // cout << "else" <<" ";
-            rowptr[rowptr_tail] = (rowptr[rowptr_tail-1] + (mtx.indptr[s+1] - mtx.indptr[s]));
-            rowptr_tail++;
-            // cout<< "c1"<<" "<<mtx.indptr[s]<<" "<<mtx.indptr[s+1]<<" ";
-            for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
-                // if(tail<258535 && tail > 200000) cout<<tail<<" ";
-                // if(j < 0 || j >= mtx.shape[2])
-                //     cout << "error: " << j << endl;
-                // if(tail == 228856){
-                //     cout<<"enter228856"<<endl;
-                //     cout << mtx.indptr[s] << ' ' << mtx.indptr[s+1] << endl;
-                //     cout<<mtx.data[j]<<" "<<mtx.indices[j]<<endl;
-                //     cout<<"000"<<endl;
-                //     colidx[tail] = mtx.indices[j];
-                //     cout<<"111"<<endl;
-                //     // for(int k = 0;k<tail;k++) if(nnz[k]!=1) cout<<tail<<endl;
-                //     nnz[tail] = mtx.data[j];
-                //     cout<<"222"<<endl;
-                //     tail++;
-                //     cout<<"333"<<endl;
-                // }
-
-                nnz[tail] = mtx.data[j];
-                colidx[tail] = mtx.indices[j];
-                tail++;
-
-
-                // cout<<tail<<" "<<mtx.shape[2]<<endl;
-                // 这里可以用memcpy加速
-            }
-            // cout<<"c2"<<endl;
+        // rowptr_tail++;
+        // int beg = mtx.indptr[s];
+        // int ptr = rowptr[i];
+        mr.indptr[i+1] = (mr.indptr[i] + (mtx.indptr[s+1] - mtx.indptr[s]));
+        for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
+            // nnz[ptr+j-beg] = mtx.data[j];
+            // colidx[ptr+j-beg] = mtx.indices[j];
+            mr.data[tail] = mtx.data[j];
+            mr.indices[tail] = mtx.indices[j];
+            tail++;
         }
     }
-    // cout << "final len: " << tail << endl;
-    // cout << "end for" << endl;
-    SpM mr(nnz, colidx, rowptr, mtx.shape);
-    // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
-    delete[] nnz, colidx, rowptr;
-    // cout << mr.shape[0] << ' ' << mr.shape[1] << ' ' << mr.shape[2] << endl;
+    // time_beg = clock();
+    // clock_t end = clock();   
+    // cout << tail << endl;
+    // clock_t time_beg = clock();
+    // clock_t time_end = clock();
+    // cout << "new time: " << (double)(time_end - time_beg) / CLOCKS_PER_SEC << endl;
     return mr;
 }
 

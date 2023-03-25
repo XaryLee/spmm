@@ -12,6 +12,7 @@ public:
     int* indptr;
     int* shape;
     SpM(double*, int*, int*, int*);
+    SpM(int*);
     SpM();
     ~SpM();
     void operator=(const SpM &);
@@ -36,10 +37,10 @@ SpM::SpM(double* data, int* indices, int* indptr, int* shape){
     //     this->indptr[i] = indptr[i];
     // for(int i = 0; i < 3; i++)
     //     this->shape[i] = shape[i];
-    memcpy(this->data, data, sizeof(*data)*shape[2]);
-    memcpy(this->indices, indices, sizeof(*indices)*shape[2]);
-    memcpy(this->indptr, indptr, sizeof(*indptr)*(shape[0]+1));
-    memcpy(this->shape, shape, sizeof(*shape)*3);
+    memcpy(this->data, data, sizeof(double)*shape[2]);
+    memcpy(this->indices, indices, sizeof(int)*shape[2]);
+    memcpy(this->indptr, indptr, sizeof(int)*(shape[0]+1));
+    memcpy(this->shape, shape, sizeof(int)*3);
 }
 
 SpM::SpM(){
@@ -47,6 +48,14 @@ SpM::SpM(){
     indices = NULL;
     indptr = NULL;
     shape = NULL;
+}
+
+SpM::SpM(int* shape){
+    this->shape = new int[3];
+    memcpy(this->shape, shape, sizeof(int)*3);
+    data = new double[shape[2]]();
+    indices = new int[shape[2]]();
+    indptr = new int[shape[0]+1]();
 }
 
 void SpM::operator=(const SpM &mr){
