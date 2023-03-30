@@ -74,6 +74,7 @@ SpM reorder_row(SpM &mtx, int* seq){
 
 int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, int &bnum){
 
+    clock_t time_beg = clock();
     // 返回值是plist的长度
 
     // plist = []
@@ -89,7 +90,7 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
     // vector<int>::const_iterator beg, end;
     int *beg, *end;
     double *dbeg, *dend;
-    int* row_indices = NULL;
+    // int* row_indices = NULL;
 
     // cout << mtx.shape[0] << ' '<< mtx.shape[1] << ' ' << mtx.shape[2] << endl;
 
@@ -106,12 +107,12 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
         // for(auto i : mtx.indptr) cout<<i<<" ";
         // cout<<"index"<<index<<endl;
         // cout<<"indptr"<<mtx.indptr[index]<< " "<<mtx.indptr[index+1]<<" "<<endl;
-        delete[] row_indices; row_indices = NULL;
-        row_indices = new int[end-beg];
-        memcpy(row_indices, beg, sizeof(int)*(end-beg));
+        // delete[] row_indices; row_indices = NULL;
+        // row_indices = new int[end-beg];
+        // memcpy(row_indices, beg, sizeof(int)*(end-beg));
         for(int i = 0; i < end-beg; i++){
             // cout<<value<<" ";
-            auto value = row_indices[i];
+            auto value = beg[i];
             if(element_array[value] == 0)
                 counter++;
             element_array[value] = 1;
@@ -136,7 +137,7 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
 
             // cout << p_indptr_len << endl;
 
-            int* p_indptr = new int[p_indptr_len];
+            int* p_indptr = new int[p_indptr_len]();
             memcpy(p_indptr, beg, sizeof(int)*(end-beg));
             // vector<int> p_indptr(beg, end);
             // p_nnz = mtx.data[p_indptr[0]:p_indptr[-1]]
@@ -146,7 +147,7 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
             dbeg = mtx.data + p_indptr[0];
             dend = mtx.data + p_indptr[p_indptr_len-1];
             // cout << dend - dbeg << endl;
-            double* p_nnz = new double[dend - dbeg];
+            double* p_nnz = new double[dend - dbeg]();
             // cout << "111" << endl;
             memcpy(p_nnz, dbeg, sizeof(double)*(dend - dbeg));
             // vector<double> p_nnz(dbeg, dend);
@@ -157,7 +158,7 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
             beg = mtx.indices + p_indptr[0];
             end = mtx.indices + p_indptr[p_indptr_len-1];
             // cout << "length: " << end-beg << ' ' << dend-dbeg << ' ' << p_indptr_len << endl;
-            int* p_indices = new int[end-beg];
+            int* p_indices = new int[end-beg]();
             memcpy(p_indices, beg, sizeof(int)*(end-beg));
             // vector<int> p_indices(beg, end); 
             int offset = p_indptr[0];
@@ -183,8 +184,8 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
             // cout << "end if" << endl;
         }
     }
-    delete[] row_indices, element_array;
-    row_indices = NULL; element_array = NULL;
+    delete[] element_array;
+    element_array = NULL;
 
     // cout << "end for" << endl;
 
@@ -194,19 +195,19 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
     beg = mtx.indptr + psize_list[end_psize_list - 2];
     end = mtx.indptr + psize_list[end_psize_list - 1] + 1;
     int p_indptr_len = end - beg;
-    int* p_indptr = new int[p_indptr_len];
+    int* p_indptr = new int[p_indptr_len]();
     memcpy(p_indptr, beg, sizeof(int)*(end-beg));
     // vector<int> p_indptr(beg, end);
     // p_nnz = mtx.data[p_indptr[0]:p_indptr[-1]]
     dbeg = mtx.data + p_indptr[0];
     dend = mtx.data + p_indptr[p_indptr_len-1];
-    double* p_nnz = new double[dend-dbeg];
+    double* p_nnz = new double[dend-dbeg]();
     memcpy(p_nnz, dbeg, sizeof(double)*(dend-dbeg));
     // vector<double> p_nnz(dbeg, dend);
     // p_indices = mtx.indices[p_indptr[0]:p_indptr[-1]]
     beg = mtx.indices + p_indptr[0];
     end = mtx.indices + p_indptr[p_indptr_len-1];
-    int* p_indices = new int[end-beg];
+    int* p_indices = new int[end-beg]();
     memcpy(p_indices, beg, sizeof(int)*(end-beg));
     // vector<int> p_indices(beg, end); 
     int offset = p_indptr[0];
@@ -226,6 +227,10 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
     plist[tail++] = pm;
     bnum = end_psize_list - 1;
     // cout << "the number of blocks is " << bnum << endl;
+
+    clock_t time_end = clock();
+    cout << "time for gen_new_panel: " << (double)(time_end - time_beg) / CLOCKS_PER_SEC << endl;
+
     return tail;
 }
 
