@@ -274,7 +274,8 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     // cout<<"enter gen_new_panels"<<endl;
     // cout << mr_bitmap.shape[0] << ' ' << mr_bitmap.shape[1] << ' ' << mr_bitmap.shape[2] << endl;
     auto begin_gpnl= high_resolution_clock::now();
-    regions_length = gen_new_panels(mr_bitmap,regions,bsize_list,end_bsize_list,bnum);//gen_panel
+    // regions_length = gen_new_panels(mr_bitmap,regions,bsize_list,end_bsize_list,bnum);//gen_panel
+    regions_length = gen_new_panels(mr_bitmap,bsize_list,end_bsize_list,bnum);
     auto end_gpnl= high_resolution_clock::now();
     auto duration_gpnl = duration_cast<microseconds>(end_gpnl - begin_gpnl);
     time_gpnl +=  double(duration_gpnl.count());
@@ -300,13 +301,15 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
         end_add_panelsize_list=0;
 
         auto begin_a= high_resolution_clock::now();
-        gen_panel_list(regions[index],add_panelsize_list,end_add_panelsize_list);//a
+        // gen_panel_list(regions[index], add_panelsize_list, end_add_panelsize_list);
+        gen_panel_list(mr_bitmap, bsize_list[index], bsize_list[index+1], add_panelsize_list,end_add_panelsize_list);//a
         auto end_a= high_resolution_clock::now();
         auto duration_a = duration_cast<microseconds>(end_a - begin_a);
         time_a +=  double(duration_a.count());
 
         auto begin_b= high_resolution_clock::now();
-        panel_sort_nnz(seq_v8,end_seq_v8,spv8_list,regions[index],add_panelsize_list,end_add_panelsize_list);//b
+        // panel_sort_nnz(seq_v8,end_seq_v8,spv8_list,regions[index],add_panelsize_list,end_add_panelsize_list);//b
+        panel_sort_nnz(seq_v8, end_seq_v8, spv8_list, mr_bitmap, bsize_list[index], bsize_list[index+1], add_panelsize_list, end_add_panelsize_list);
         auto end_b= high_resolution_clock::now();
         auto duration_b = duration_cast<microseconds>(end_b - begin_b);
         time_b +=  double(duration_b.count());
@@ -314,7 +317,7 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
         // for(int i = 0;i < seq_v8.size();i++) seq_v8_arr[i] = seq_v8[i];
 
         auto begin_c= high_resolution_clock::now();
-        SpM tmp_r = reorder_row(regions[index],seq_v8);//c
+        SpM tmp_r = reorder_row(mr_bitmap, bsize_list[index], bsize_list[index+1], seq_v8);//c
         auto end_c= high_resolution_clock::now();
         auto duration_c = duration_cast<microseconds>(end_c - begin_c);
         time_c +=  double(duration_c.count());

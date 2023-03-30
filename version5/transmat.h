@@ -72,9 +72,69 @@ SpM reorder_row(SpM &mtx, int* seq){
     return mr;
 }
 
+SpM reorder_row(SpM &mtx, int row_beg, int row_end, int* seq){
+
+    auto indptr = mtx.indptr + row_beg;
+    int offset = indptr[0];
+    int p_indptr_len = row_end - row_beg + 1;
+    auto data = mtx.data + indptr[0];
+    auto indices = mtx.indices + indptr[0];
+    // dend = mtx.data + indptr[p_indptr_len-1];
+    int shape[3];
+    shape[0] = row_end - row_beg;
+    shape[1] = mtx.shape[1];
+    shape[2] = indptr[shape[0]] - indptr[0];
+
+    // for(int i = 0; i < 3; i++)
+    //     cout << shape[i] << ' ';
+    // cout << endl;
+
+    SpM mr(shape);
+    vector<int> tail(CORENUM,0);
+    int MIN_CHUNK_SIZE = 20000;
+    if (shape[0] > MIN_CHUNK_SIZE){
+        for(int c=1;c<CORENUM;c++){
+            tail[c] += tail[c-1];
+            int sup = floor(shape[0] * (c-1) / CORENUM);
+            int up = floor(shape[0] * (c) / CORENUM);
+            for(int i = sup ; i < up; i++) {
+                tail[c]+=indptr[seq[i]+1] - indptr[seq[i]];
+            }
+            mr.indptr[up] = tail[c];
+        }
+        #pragma omp parallel for num_threads(CORENUM)
+        for(int c =0;c<CORENUM;c++)
+        {
+            for(int i = floor(shape[0] * (c) / CORENUM) ; i < floor(shape[0] * (c+1) / CORENUM); i++){
+                int s = seq[i];
+                //竞争关系
+                mr.indptr[i+1] = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
+                for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
+                    mr.data[tail[c]] = data[j];
+                    mr.indices[tail[c]] = indices[j];
+                    tail[c]++;
+                }
+            }
+        }
+    }
+    else{
+        int tail = 0;
+        for(int i = 0; i < shape[0]; i++){
+            int s = seq[i];
+            mr.indptr[i+1] = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
+            for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
+                mr.data[tail] = data[j];
+                mr.indices[tail] = indices[j];
+                tail++;
+            }
+        }
+    }
+    return mr;
+}
+
 int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, int &bnum){
 
-    clock_t time_beg = clock();
+    // clock_t time_beg = clock();
     // 返回值是plist的长度
 
     // plist = []
@@ -228,10 +288,55 @@ int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, 
     bnum = end_psize_list - 1;
     // cout << "the number of blocks is " << bnum << endl;
 
-    clock_t time_end = clock();
-    cout << "time for gen_new_panel: " << (double)(time_end - time_beg) / CLOCKS_PER_SEC << endl;
+    // clock_t time_end = clock();
+    // cout << "time for gen_new_panel: " << (double)(time_end - time_beg) / CLOCKS_PER_SEC << endl;
 
     return tail;
+}
+
+
+int gen_new_panels(SpM &mtx, int* &psize_list,int &end_psize_list, int &bnum){
+
+    // clock_t time_beg = clock();
+    // 返回值是plist的长度
+    int tail = 0;
+    int threshold = 512 * 1024 / 8; //65536
+    // int threshold = 4;
+    int counter = 0;
+    bool* element_array = new bool[mtx.shape[1]]();
+    int *beg, *end;
+    double *dbeg, *dend;
+
+    for(int index = 0; index < mtx.shape[0]; index++ ){
+
+        beg = mtx.indices + mtx.indptr[index];
+        end = mtx.indices + mtx.indptr[index + 1];
+        for(int i = 0; i < end-beg; i++){
+            auto value = beg[i];
+            if(element_array[value] == 0)
+                counter++;
+            element_array[value] = 1;
+        }
+        if(counter >= threshold){
+            delete[] element_array; element_array = NULL;
+            element_array = new bool[mtx.shape[1]]();
+            counter = 0;
+            psize_list[end_psize_list++] = index + 1;
+        }
+    }
+    delete[] element_array;
+    element_array = NULL;
+
+    psize_list[end_psize_list++]=mtx.shape[0];
+    
+    bnum = end_psize_list - 1;
+
+    // clock_t time_end = clock();
+    // cout << "time for gen_new_panel: " << (double)(time_end - time_beg) / CLOCKS_PER_SEC << endl;
+    // for(int i = 0; i < end_psize_list; i++)
+    //     cout << psize_list[i] << ' ';
+    // cout << endl;
+    return bnum;
 }
 
 #endif
