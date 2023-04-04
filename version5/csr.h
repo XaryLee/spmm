@@ -29,15 +29,19 @@ SpM::SpM(double* data, int* indices, int* indptr, int* shape){
     this->indices = new int[shape[2]];
     this->indptr = new int[shape[0]+1];
     this->shape = new int[3];
+
+    int nnz = shape[2];
+    int row = shape[0] + 1;
+
     #pragma omp parallel for num_threads(CORENUM)
-    for(int i = 0; i < shape[2]; i++){
+    for(int i = 0; i < nnz; i++){
         this->data[i] = data[i];
         this->indices[i] = indices[i];
+        if(i<row) this->indptr[i] = indptr[i];
     }
-    #pragma omp parallel for num_threads(CORENUM)
-    for(int i = 0; i < shape[0]+1; i++)
-        this->indptr[i] = indptr[i];
-    #pragma omp parallel for num_threads(CORENUM)
+    // #pragma omp parallel for num_threads(CORENUM)
+    // for(int i = 0; i < shape[0]+1; i++)
+    //     this->indptr[i] = indptr[i];
     for(int i = 0; i < 3; i++)
         this->shape[i] = shape[i];
     // memcpy(this->data, data, sizeof(double)*shape[2]);

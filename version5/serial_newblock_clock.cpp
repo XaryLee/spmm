@@ -7,7 +7,7 @@
 #include<unordered_map>
 #include <omp.h>
 
-// #define CORENUM 8
+//#define CORENUM 8
 
 #include "csr.h"
 #include "bitmap.h"
@@ -183,12 +183,12 @@ SpM csr_matrix(string path){
 //     delete[] new_seq;
 // }
 
-void gen_serial_origin_vec(SpM &mr,SpM &new_mr,vector<int> &seq_key,vector<int> &sseq){
+void gen_serial_origin_vec(int *shape,int *indices,int *new_seq,vector<int> &seq_key,vector<int> &sseq){
     int seq_cnt = 0;
-    vector<int> bitmap(mr.shape[1],-1);
-    int* new_seq = new int[mr.shape[2]];
-    for(int i = 0;i<mr.shape[2];i++){
-        int ind_iter = mr.indices[i];
+    vector<int> bitmap(shape[1],-1);
+    // new_seq = new int[mr.shape[2]];
+    for(int i = 0;i<shape[2];i++){
+        int ind_iter = indices[i];
         int bit_value = bitmap[ind_iter];
         if(bit_value == -1){
             bitmap[ind_iter] = seq_cnt;
@@ -201,8 +201,6 @@ void gen_serial_origin_vec(SpM &mr,SpM &new_mr,vector<int> &seq_key,vector<int> 
             new_seq[i] = bit_value;
         }
     }
-    new_mr = SpM(mr.data,new_seq,mr.indptr,mr.shape);
-    delete[] new_seq;new_seq=nullptr;
 }
 
 // void gen_serial(SpM &mr,SpM &new_mr,unordered_map<int,int> &seq_dict){
@@ -271,7 +269,6 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     int indptr_offset = 0;
     int panel_size = 2048;
 
-    SpM* regions = new SpM[MAXREGION];
     int regions_length = 0;
     int* bsize_list=new int[mr.shape[0]] ;
     bsize_list[0]=0;
@@ -328,9 +325,11 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
         auto duration_c = duration_cast<microseconds>(end_c - begin_c);
         time_c +=  double(duration_c.count());
 
-        
+        int *rcolidx = new int[tmp_r.shape[2]];
+        double *rdata = new double[tmp_r.shape[2]];
+
         auto begin_d= high_resolution_clock::now();
-        regions[index] = transpose_spv8_nnz(tmp_r,spv8_list,add_panelsize_list);//d
+        transpose_spv8_nnz(tmp_r,spv8_list,add_panelsize_list,rcolidx,rdata);//d
         auto end_d= high_resolution_clock::now();
         auto duration_d = duration_cast<microseconds>(end_d - begin_d);
         time_d +=  double(duration_d.count());
@@ -348,24 +347,24 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 
         auto begin_f= high_resolution_clock::now();
         for(int i=0;i<end_seq_v8;i++) seq_v8_block[end_seq_v8_block++]=seq_v8[i] + bsize_list[cnt];//f
-        for(int i = 0;i < regions[index].shape[2];i++) bserial_data[end_bserial_data++]=regions[index].data[i];
-        for(int i = 1;i < regions[index].shape[0] - 1;i++) bserial_indptr[end_bserial_indptr++]=regions[index].indptr[i]+indptr_offset;
+        for(int i = 0;i < tmp_r.shape[2];i++) bserial_data[end_bserial_data++]=rdata[i];
+        for(int i = 1;i < tmp_r.shape[0] - 1;i++) bserial_indptr[end_bserial_indptr++]=tmp_r.indptr[i]+indptr_offset;
         auto end_f= high_resolution_clock::now();
         auto duration_f = duration_cast<microseconds>(end_f - begin_f);
         time_f +=  double(duration_f.count());
         
-        indptr_offset = indptr_offset + regions[index].indptr[regions[index].shape[0]];
+        indptr_offset = indptr_offset + tmp_r.indptr[tmp_r.shape[0]];
         spv8_lists.push_back(spv8_list);
         cnt = cnt + 1;
         
         auto begin_serial= high_resolution_clock::now();
 
-        SpM smr;
+        int *seq = new int[tmp_r.shape[2]];
         vector<int> seq_key;
         // unordered_map<int,int> seq;
 
         // gen_serial_origin(regions[index],smr,seq,order);
-        gen_serial_origin_vec(regions[index],smr,seq_key,sseq);
+        gen_serial_origin_vec(tmp_r.shape,rcolidx,seq,seq_key,sseq);
 
         auto end_serial= high_resolution_clock::now();
         auto duration_serial = duration_cast<microseconds>(end_serial - begin_serial);
@@ -373,8 +372,9 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
 
         bseq_list_key.push_back(seq_key);
 
-        for(int cc = 0;cc < smr.shape[2]; cc++) bserial_colidx[end_bserial_colidx++]=smr.indices[cc] + offset;
+        for(int cc = 0;cc < tmp_r.shape[2]; cc++) bserial_colidx[end_bserial_colidx++]=seq[cc] + offset;
         offset = offset + seq_key.size();
+        delete[] seq;
         
     }
     delete[] seq_v8;seq_v8=NULL;
@@ -397,7 +397,6 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     shape[2] = mr.shape[2];
     // smr_out.check();
     delete[] bsize_list;bsize_list=NULL;
-    delete[] bserial_indptr; bserial_indptr = NULL;
     //这里是要一维的数组
     SerialSort_block_vec(seq_bitmap,seq_v8_block,end_seq_v8_block,bseq_list_key,seq_input);
     auto end_g= high_resolution_clock::now();

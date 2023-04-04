@@ -297,7 +297,7 @@ SpM transpose_v8(SpM &mr, vector<int> spv8_list, int panelsize=2*1024){
     return new_mr;
 }
 
-SpM transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, int* panelsize_list){
+void transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, int* panelsize_list,int *new_colidx,double *new_data){
     // cout << "enter transpose_spv8_nnz" << endl;
     auto rowptr = mr.indptr;
 
@@ -306,16 +306,16 @@ SpM transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, int* panelsize_list){
 
     auto colidx = mr.indices;
     auto data = mr.data;
-    auto new_rowptr = mr.indptr;
-    int* new_colidx = new int[mr.shape[2]];
+    // new_colidx = new int[mr.shape[2]];
     int new_colidx_tail = 0;
-    double* new_data = new double[mr.shape[2]];
+    // new_data = new double[mr.shape[2]];
     int new_data_tail = 0;
     int base = 0;
     int times = 0;
     int times1 = 0;
     int times2 = 0;
     // cout << spv8_list.size() << endl;
+    // #pragma omp parallel for num_threads((int)(spv8_list.size()))
     for(int i = 0; i < (int)(spv8_list.size()); i++){
         // cout << i << endl;
         int count = spv8_list[i];
@@ -389,9 +389,7 @@ SpM transpose_spv8_nnz(SpM &mr, vector<int> spv8_list, int* panelsize_list){
         base += panelsize;
     }
     // cout << "end for" << endl;
-    SpM new_mr(new_data, new_colidx, new_rowptr, mr.shape);
-    delete[] new_data, new_colidx;
-    return new_mr;
+    // SpM new_mr(new_data, new_colidx, new_rowptr, mr.shape);
 }
 
 #endif

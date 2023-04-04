@@ -90,45 +90,45 @@ SpM reorder_row(SpM &mtx, int row_beg, int row_end, int* seq){
     // cout << endl;
 
     SpM mr(shape);
-    vector<int> tail(CORENUM,0);
-    int MIN_CHUNK_SIZE = 20000;
-    if (shape[0] < MIN_CHUNK_SIZE || CORENUM == 1){
-        int tail = 0;
-        for(int i = 0; i < shape[0]; i++){
-            int s = seq[i];
-            mr.indptr[i+1] = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
-            for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
-                mr.data[tail] = data[j];
-                mr.indices[tail] = indices[j];
-                tail++;
-            }
+    // vector<int> tail(CORENUM,0);
+    // int MIN_CHUNK_SIZE = 200000;
+    // if (shape[0] < MIN_CHUNK_SIZE || CORENUM == 1){
+    int tail = 0;
+    for(int i = 0; i < shape[0]; i++){
+        int s = seq[i];
+        mr.indptr[i+1] = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
+        for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
+            mr.data[tail] = data[j];
+            mr.indices[tail] = indices[j];
+            tail++;
         }
     }
-    else{
-        for(int c=1;c<CORENUM;c++){
-            tail[c] += tail[c-1];
-            int sup = floor(shape[0] * (c-1) / CORENUM);
-            int up = floor(shape[0] * (c) / CORENUM);
-            for(int i = sup ; i < up; i++) {
-                tail[c]+=indptr[seq[i]+1] - indptr[seq[i]];
-            }
-            mr.indptr[up] = tail[c];
-        }
-        #pragma omp parallel for num_threads(CORENUM)
-        for(int c =0;c<CORENUM;c++)
-        {
-            for(int i = floor(shape[0] * (c) / CORENUM) ; i < floor(shape[0] * (c+1) / CORENUM); i++){
-                int s = seq[i];
-                //竞争关系
-                mr.indptr[i+1] = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
-                for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
-                    mr.data[tail[c]] = data[j];
-                    mr.indices[tail[c]] = indices[j];
-                    tail[c]++;
-                }
-            }
-        }
-    }
+    // }
+    // else{
+    //     for(int c=1;c<CORENUM;c++){
+    //         tail[c] += tail[c-1];
+    //         int sup = floor(shape[0] * (c-1) / CORENUM);
+    //         int up = floor(shape[0] * (c) / CORENUM);
+    //         for(int i = sup ; i < up; i++) {
+    //             tail[c]+=indptr[seq[i]+1] - indptr[seq[i]];
+    //         }
+    //         mr.indptr[up] = tail[c];
+    //     }
+    //     #pragma omp parallel for num_threads(CORENUM)
+    //     for(int c =0;c<CORENUM;c++)
+    //     {
+    //         for(int i = floor(shape[0] * (c) / CORENUM) ; i < floor(shape[0] * (c+1) / CORENUM); i++){
+    //             int s = seq[i];
+    //             //竞争关系
+    //             mr.indptr[i+1] = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
+    //             for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
+    //                 mr.data[tail[c]] = data[j];
+    //                 mr.indices[tail[c]] = indices[j];
+    //                 tail[c]++;
+    //             }
+    //         }
+    //     }
+    // }
     return mr;
 }
 
