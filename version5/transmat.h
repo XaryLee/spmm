@@ -8,58 +8,13 @@
 
 using namespace std;
 
-// SpM reorder_row(SpM &mtx, int* seq){
-    
-//     SpM mr(mtx.shape);
-//     // mr.check(false);
-//     int shape = mtx.shape[0];
-//     int tail = 0;
-//     for(int i = 0; i < shape; i++){
-//             int s = seq[i];
-//             mr.indptr[i+1] = (mr.indptr[i] + (mtx.indptr[s+1] - mtx.indptr[s]));
-//             for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
-//                 mr.data[tail] = mtx.data[j];
-//                 mr.indices[tail] = mtx.indices[j];
-//                 tail++;
-//             }
-//         }
-//     return mr;
-// }
-
 SpM reorder_row(SpM &mtx, int* seq){
     
     SpM mr(mtx.shape);
+    // mr.check(false);
     int shape = mtx.shape[0];
-    vector<int> tail(CORENUM,0);
-    int MIN_CHUNK_SIZE = 20000;
-    if (shape > MIN_CHUNK_SIZE){
-        for(int c=1;c<CORENUM;c++){
-            tail[c] += tail[c-1];
-            int sup = floor(shape * (c-1) / CORENUM);
-            int up = floor(shape * (c) / CORENUM);
-            for(int i = sup ; i < up; i++) {
-                tail[c]+=mtx.indptr[seq[i]+1] - mtx.indptr[seq[i]];
-            }
-            mr.indptr[up] = tail[c];
-        }
-        #pragma omp parallel for num_threads(CORENUM)
-        for(int c =0;c<CORENUM;c++)
-        {
-            for(int i = floor(shape * (c) / CORENUM) ; i < floor(shape * (c+1) / CORENUM); i++){
-                int s = seq[i];
-                //竞争关系
-                mr.indptr[i+1] = (mr.indptr[i] + (mtx.indptr[s+1] - mtx.indptr[s]));
-                for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
-                    mr.data[tail[c]] = mtx.data[j];
-                    mr.indices[tail[c]] = mtx.indices[j];
-                    tail[c]++;
-                }
-            }
-        }
-    }
-    else{
-        int tail = 0;
-        for(int i = 0; i < shape; i++){
+    int tail = 0;
+    for(int i = 0; i < shape; i++){
             int s = seq[i];
             mr.indptr[i+1] = (mr.indptr[i] + (mtx.indptr[s+1] - mtx.indptr[s]));
             for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
@@ -68,9 +23,54 @@ SpM reorder_row(SpM &mtx, int* seq){
                 tail++;
             }
         }
-    }
     return mr;
 }
+
+// SpM reorder_row(SpM &mtx, int* seq){
+    
+//     SpM mr(mtx.shape);
+//     int shape = mtx.shape[0];
+//     vector<int> tail(CORENUM,0);
+//     int MIN_CHUNK_SIZE = 20000;
+//     if (shape < MIN_CHUNK_SIZE || CORENUM == 1){
+//         int tail = 0;
+//         for(int i = 0; i < shape; i++){
+//             int s = seq[i];
+//             mr.indptr[i+1] = (mr.indptr[i] + (mtx.indptr[s+1] - mtx.indptr[s]));
+//             for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
+//                 mr.data[tail] = mtx.data[j];
+//                 mr.indices[tail] = mtx.indices[j];
+//                 tail++;
+//             }
+//         }
+//     }
+//     else{
+//         for(int c=1;c<CORENUM;c++){
+//             tail[c] += tail[c-1];
+//             int sup = floor(shape * (c-1) / CORENUM);
+//             int up = floor(shape * (c) / CORENUM);
+//             for(int i = sup ; i < up; i++) {
+//                 tail[c]+=mtx.indptr[seq[i]+1] - mtx.indptr[seq[i]];
+//             }
+//             mr.indptr[up] = tail[c];
+//         }
+//         #pragma omp parallel for num_threads(CORENUM)
+//         for(int c =0;c<CORENUM;c++)
+//         {
+//             for(int i = floor(shape * (c) / CORENUM) ; i < floor(shape * (c+1) / CORENUM); i++){
+//                 int s = seq[i];
+//                 //竞争关系
+//                 mr.indptr[i+1] = (mr.indptr[i] + (mtx.indptr[s+1] - mtx.indptr[s]));
+//                 for( int j = mtx.indptr[s]; j < mtx.indptr[s+1]; j++ ){
+//                     mr.data[tail[c]] = mtx.data[j];
+//                     mr.indices[tail[c]] = mtx.indices[j];
+//                     tail[c]++;
+//                 }
+//             }
+//         }
+//     }
+//     return mr;
+// }
 
 SpM reorder_row(SpM &mtx, int row_beg, int row_end, int* seq){
 
@@ -92,7 +92,19 @@ SpM reorder_row(SpM &mtx, int row_beg, int row_end, int* seq){
     SpM mr(shape);
     vector<int> tail(CORENUM,0);
     int MIN_CHUNK_SIZE = 20000;
-    if (shape[0] > MIN_CHUNK_SIZE){
+    if (shape[0] < MIN_CHUNK_SIZE || CORENUM == 1){
+        int tail = 0;
+        for(int i = 0; i < shape[0]; i++){
+            int s = seq[i];
+            mr.indptr[i+1] = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
+            for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
+                mr.data[tail] = data[j];
+                mr.indices[tail] = indices[j];
+                tail++;
+            }
+        }
+    }
+    else{
         for(int c=1;c<CORENUM;c++){
             tail[c] += tail[c-1];
             int sup = floor(shape[0] * (c-1) / CORENUM);
@@ -114,18 +126,6 @@ SpM reorder_row(SpM &mtx, int row_beg, int row_end, int* seq){
                     mr.indices[tail[c]] = indices[j];
                     tail[c]++;
                 }
-            }
-        }
-    }
-    else{
-        int tail = 0;
-        for(int i = 0; i < shape[0]; i++){
-            int s = seq[i];
-            mr.indptr[i+1] = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
-            for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
-                mr.data[tail] = data[j];
-                mr.indices[tail] = indices[j];
-                tail++;
             }
         }
     }

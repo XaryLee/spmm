@@ -5,18 +5,13 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <chrono>
 #include <omp.h>
 #include "csr.h"
 
-using namespace std;
+using namespace chrono;
 
-vector<int> SeqReverse(vector<int> seq){
-    auto length = seq.size();
-    vector<int> reseq(length);
-    for(int i = 0; i < (int)length; i++)
-        reseq[seq[i]] = i;
-    return reseq;
-}
+using namespace std;
 
 int* SeqReverse(int* seq, int len){
     // 调用后记得delete[]
@@ -68,11 +63,9 @@ int* gen_rseq(int* seq_bitmap, int bitmap_len, int* seq_v8, int seq_v8_len){
     return seq_row;
 }
 
-vector<int> gen_wseq(int* seq_row, vector<int> seq_dict){
-    vector<int> seq_wb;
+void gen_wseq(int* seq_row, vector<int> seq_dict,vector<int> &seq_input){
     for(auto order:seq_dict)
-        seq_wb.push_back(seq_row[order]);
-    return seq_wb;
+        seq_input.push_back(seq_row[order]);
 }
 
 vector<int> gen_wseq(int* seq_row, unordered_map<int, int> seq_dict,vector<int> seq_order){
@@ -82,40 +75,17 @@ vector<int> gen_wseq(int* seq_row, unordered_map<int, int> seq_dict,vector<int> 
     return seq_wb;
 }
 
-// vector<int> SerialSort(vector<int> seq_bitmap, vector<int> seq_v8, unordered_map<int, int> seq_dict){
-//     vector<int> rseq = SeqReverse(gen_rseq(seq_bitmap, seq_v8));
-//     vector<int> seq_wb = gen_wseq(rseq, seq_dict);
-//     return seq_wb;
-// }
-
-vector<vector<int>> SerialSort_block(int* seq_bitmap, vector<int> seq_v8, vector<unordered_map<int, int>> seq_list,vector<vector<int>> seq_order){
-    vector<vector<int>> wseq_list;
-    int* seq_row = gen_rseq(seq_bitmap, seq_v8);
-    int* rseq = SeqReverse(seq_row, seq_v8.size());
-    delete[] seq_row; seq_row = NULL;
-    int cnt = 0;
-    // gen_wseq可以改成int* 返回wseq_list:vector<int*>
-    for(auto seq:seq_list){
-        vector<int> wseq = gen_wseq(rseq, seq,seq_order[cnt++]);
-        wseq_list.push_back(wseq);
-    }
-    delete[] rseq; rseq = NULL;
-    return wseq_list;
-}
-
-vector<vector<int>> SerialSort_block_vec(int* seq_bitmap, int* seq_v8,int end_seq_v8, vector<vector<int>> seq_list){
-    vector<vector<int>> wseq_list;
+void SerialSort_block_vec(int* seq_bitmap, int* seq_v8,int end_seq_v8, vector<vector<int>> seq_list,vector<int> &seq_input){
     int* seq_row = gen_rseq(seq_bitmap, 0,seq_v8,end_seq_v8);
     int* rseq = SeqReverse(seq_row, end_seq_v8);
     delete[] seq_row; seq_row = NULL;
     int cnt = 0;
     // gen_wseq可以改成int* 返回wseq_list:vector<int*>
+
     for(auto seq:seq_list){
-        vector<int> wseq = gen_wseq(rseq, seq);
-        wseq_list.push_back(wseq);
+        gen_wseq(rseq, seq,seq_input);
     }
     delete[] rseq; rseq = NULL;
-    return wseq_list;
 }
 
 #endif

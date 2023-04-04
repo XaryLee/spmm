@@ -7,7 +7,7 @@
 #include<unordered_map>
 #include <omp.h>
 
-#define CORENUM 8
+// #define CORENUM 8
 
 #include "csr.h"
 #include "bitmap.h"
@@ -15,7 +15,7 @@
 #include "v8sort.h"
 #include "wbsort.h"
 
-#define MAXLENGTH 10000000
+#define MAXLENGTH 1000000
 #define SECT 2048
 #define MAXREGION 20
 
@@ -31,6 +31,7 @@ double time_c = 0;
 double time_d = 0;
 double time_e = 0;
 double time_f = 0;
+double time_g = 0;
 double time_gpnl=0;
 string get_mname(string origin_name){
     string mname;
@@ -182,18 +183,23 @@ SpM csr_matrix(string path){
 //     delete[] new_seq;
 // }
 
-void gen_serial_origin_vec(SpM &mr,SpM &new_mr,vector<int> &seq_key){
+void gen_serial_origin_vec(SpM &mr,SpM &new_mr,vector<int> &seq_key,vector<int> &sseq){
     int seq_cnt = 0;
     vector<int> bitmap(mr.shape[1],-1);
     int* new_seq = new int[mr.shape[2]];
     for(int i = 0;i<mr.shape[2];i++){
         int ind_iter = mr.indices[i];
-        if(bitmap[ind_iter] == -1){
+        int bit_value = bitmap[ind_iter];
+        if(bit_value == -1){
             bitmap[ind_iter] = seq_cnt;
             seq_key.push_back(ind_iter);
+            sseq.push_back(ind_iter);
+            new_seq[i] = seq_cnt;
             seq_cnt += 1;
         }
-        new_seq[i] = bitmap[ind_iter];
+        else{
+            new_seq[i] = bit_value;
+        }
     }
     new_mr = SpM(mr.data,new_seq,mr.indptr,mr.shape);
     delete[] new_seq;new_seq=nullptr;
@@ -214,7 +220,7 @@ void gen_serial_origin_vec(SpM &mr,SpM &new_mr,vector<int> &seq_key){
 //     new_mr = SpM(mr.data,new_seq,mr.indptr,mr.shape);
 // }
 
-void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<int> &sseq,SpM &smr_out,int &bnum){
+void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<int> &sseq,int &bnum,int *bserial_colidx,double *bserial_data,int *bserial_indptr,int *shape){
 
     int* seq_bitmap = new int[mr.shape[0]];
 
@@ -255,12 +261,11 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     int offset =0;
     // vector<unordered_map<int,int>> bseq_list;
     vector<vector<int>> bseq_list_key;
-    vector<vector<int>> bseq_list_value;
-    int* bserial_colidx=new int[mr.indptr[mr.shape[0]]];
+    bserial_colidx = new int[mr.indptr[mr.shape[0]]];
     int end_bserial_colidx=0;
-    double* bserial_data=new double[mr.indptr[mr.shape[0]]];
+    bserial_data=new double[mr.indptr[mr.shape[0]]];
     int end_bserial_data=0;
-    int* bserial_indptr = new int[mr.shape[0]+1];
+    bserial_indptr = new int[mr.shape[0]+1];
     bserial_indptr[0]=0;
     int end_bserial_indptr=1;
     int indptr_offset = 0;
@@ -290,9 +295,10 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     int end_seq_v8=0;
     vector<int> spv8_list;
     vector<int> add_panelsize_list;
-    vector<vector<int>> seq_key_list;
     // cout << regions_length << endl;
     int end_add_panelsize_list = 0;
+    sseq.resize(0);
+    seq_input.resize(0);
     for(int index = 0;index < regions_length;index++){
         //vector<int>().swap(seq_v8);
         end_seq_v8=0;
@@ -359,16 +365,15 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
         // unordered_map<int,int> seq;
 
         // gen_serial_origin(regions[index],smr,seq,order);
-        gen_serial_origin_vec(regions[index],smr,seq_key);
+        gen_serial_origin_vec(regions[index],smr,seq_key,sseq);
 
         auto end_serial= high_resolution_clock::now();
         auto duration_serial = duration_cast<microseconds>(end_serial - begin_serial);
         time_serial += double(duration_serial.count());
 
-        // bseq_list_key.push_back(seq_key);
+        bseq_list_key.push_back(seq_key);
 
         for(int cc = 0;cc < smr.shape[2]; cc++) bserial_colidx[end_bserial_colidx++]=smr.indices[cc] + offset;
-        seq_key_list.push_back(seq_key);
         offset = offset + seq_key.size();
         
     }
@@ -385,33 +390,39 @@ void gen_trace_formats(SpM &mr,vector<int> &seq_input,vector<int> &rseq,vector<i
     // for(int i = 0;i < bserial_colidx.size();i++) bserial_colidx_arr[i] = bserial_colidx[i];
     // int *bserial_indptr_arr = new int[bserial_indptr.size()];
     // for(int i = 0;i < bserial_indptr.size();i++) bserial_indptr_arr[i] = bserial_indptr[i];
-
-    smr_out = SpM(bserial_data,bserial_colidx,bserial_indptr,mr.shape);
+    auto begin_g= high_resolution_clock::now();
+    // smr_out = SpM(bserial_data,bserial_colidx,bserial_indptr,mr.shape);
+    shape[0] = mr.shape[0];
+    shape[1] = mr.shape[1];
+    shape[2] = mr.shape[2];
     // smr_out.check();
     delete[] bsize_list;bsize_list=NULL;
-    delete[] bserial_data; bserial_data = NULL;
-    delete[] bserial_colidx; bserial_colidx = NULL;
     delete[] bserial_indptr; bserial_indptr = NULL;
     //这里是要一维的数组
-    vector<vector<int>> seq_temp = SerialSort_block_vec(seq_bitmap,seq_v8_block,end_seq_v8_block,bseq_list_key);
-    seq_input.resize(0);
-    for(auto i = seq_temp.begin();i != seq_temp.end();i++){
-        for(auto j = i->begin();j != i->end();j++){
-            seq_input.push_back(*j);
-        }
-    }
+    SerialSort_block_vec(seq_bitmap,seq_v8_block,end_seq_v8_block,bseq_list_key,seq_input);
+    auto end_g= high_resolution_clock::now();
+    auto duration_g = duration_cast<microseconds>(end_g - begin_g);
+    time_g =  double(duration_g.count());
+    // seq_input.resize(0);
+    // for(auto i = seq_temp.begin();i != seq_temp.end();i++){
+    //     for(auto j = i->begin();j != i->end();j++){
+    //         seq_input.push_back(*j);
+    //     }
+    // }
     int* seq_row = gen_rseq(seq_bitmap,0,seq_v8_block,end_seq_v8_block);
     int* rseq_arr;
+
     rseq_arr = SeqReverse(seq_row, end_seq_v8_block);
     delete[] seq_row; seq_row = NULL;
     rseq = vector<int>(rseq_arr, rseq_arr + end_seq_v8_block);
+
     delete[] rseq_arr; rseq_arr = NULL;
-    sseq.resize(0);
-    for(int i=0;i<seq_key_list.size();i++){
-        for(auto k : seq_key_list[i]){
-            sseq.push_back(k);
-        }
-    }
+    // sseq.resize(0);
+    // for(int i=0;i<seq_key_list.size();i++){
+    //     for(auto k : seq_key_list[i]){
+    //         sseq.push_back(k);
+    //     }
+    // }
     delete[] seq_v8_block; seq_v8_block=NULL;
     delete[] seq_bitmap; seq_bitmap = NULL;
     auto end_wbsort = high_resolution_clock::now();
@@ -452,10 +463,13 @@ int main(){
         vector<int> sseq;
         vector<int> rseq;
         int bnum;
-        SpM smr;
+        int *bserial_colidx;
+        double *bserial_data;
+        int *bserial_indptr;
+        int *shape = new int[3];
         
         auto begin_transform = high_resolution_clock::now();
-        gen_trace_formats(mr,seq,rseq,sseq,smr,bnum);
+        gen_trace_formats(mr,seq,rseq,sseq,bnum,bserial_colidx,bserial_data,bserial_indptr,shape);
         auto end_transform = high_resolution_clock::now();
         auto end = high_resolution_clock::now();
         auto duration_transform = duration_cast<microseconds>(end_transform - begin_transform);
@@ -480,6 +494,7 @@ int main(){
         cout<<"--------time for d:"<<time_d<<"----"<<endl;
         cout<<"--------time for e:"<<time_e<<"----"<<endl;
         cout<<"--------time for f:"<<time_f<<"----"<<endl;
+        cout<<"--------time for g:"<<time_g<<"----"<<endl;
         cout<<"----total for v8:"<<time_a+time_b+time_c+time_d+time_e+time_f+time_gpnl<<"----"<<endl;
         // cout<<"done"<<endl;//test
         // if(sseq.empty()) cout<<"empty";//test

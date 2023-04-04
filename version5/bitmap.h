@@ -6,6 +6,7 @@
 #include <math.h>
 #include <algorithm>
 #include <numeric>
+#include <execution>
 #include <ctime>
 #include "csr.h"
 
@@ -28,7 +29,16 @@ int* argsort(int* v, int len){
     // clock_t beg = clock();
     int* idx = new int[len];
     iota(idx, idx+len, 0);
-    sort(idx, idx+len, [&v](int i1, int i2){return v[i1] < v[i2];});
+    // sort(idx, idx+len, [&v](int i1, int i2){return v[i1] < v[i2];});
+    sort(execution::par, idx, idx+len, [v](int i1, int i2) {return v[i1] < v[i2]; });
+    //#pragma omp parallel for num_threads(CORENUM)
+    //for (int i = 0; i < len; i++) {
+    //    for (int j = i + 1; j < len; j++) {
+    //        if (v[idx[i]] > v[idx[j]]) {
+    //            std::swap(idx[i], idx[j]);
+    //        }
+    //    }
+    //}
     // clock_t end = clock();
     // cout << "argsort time: " << (double)(end - beg) / CLOCKS_PER_SEC << endl;
     return idx;

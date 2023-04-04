@@ -29,18 +29,21 @@ SpM::SpM(double* data, int* indices, int* indptr, int* shape){
     this->indices = new int[shape[2]];
     this->indptr = new int[shape[0]+1];
     this->shape = new int[3];
-    // for(int i = 0; i < shape[2]; i++)
-    //     this->data[i] = data[i];
-    // for(int i = 0; i < shape[2]; i++)
-    //     this->indices[i] = indices[i];
-    // for(int i = 0; i < shape[0]+1; i++)
-    //     this->indptr[i] = indptr[i];
-    // for(int i = 0; i < 3; i++)
-    //     this->shape[i] = shape[i];
-    memcpy(this->data, data, sizeof(double)*shape[2]);
-    memcpy(this->indices, indices, sizeof(int)*shape[2]);
-    memcpy(this->indptr, indptr, sizeof(int)*(shape[0]+1));
-    memcpy(this->shape, shape, sizeof(int)*3);
+    #pragma omp parallel for num_threads(CORENUM)
+    for(int i = 0; i < shape[2]; i++){
+        this->data[i] = data[i];
+        this->indices[i] = indices[i];
+    }
+    #pragma omp parallel for num_threads(CORENUM)
+    for(int i = 0; i < shape[0]+1; i++)
+        this->indptr[i] = indptr[i];
+    #pragma omp parallel for num_threads(CORENUM)
+    for(int i = 0; i < 3; i++)
+        this->shape[i] = shape[i];
+    // memcpy(this->data, data, sizeof(double)*shape[2]);
+    // memcpy(this->indices, indices, sizeof(int)*shape[2]);
+    // memcpy(this->indptr, indptr, sizeof(int)*(shape[0]+1));
+    // memcpy(this->shape, shape, sizeof(int)*3);
 }
 
 SpM::SpM(){
