@@ -1,0 +1,2 @@
+web-Stanford 73.698ms
+sx-askubuntu 57.812ms

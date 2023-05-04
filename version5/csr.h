@@ -60,9 +60,10 @@ SpM::SpM(){
 SpM::SpM(int* shape){
     this->shape = new int[3];
     memcpy(this->shape, shape, sizeof(int)*3);
-    data = new double[shape[2]]();
-    indices = new int[shape[2]]();
-    indptr = new int[shape[0]+1]();
+    data = new double[shape[2]];
+    indices = new int[shape[2]];
+    indptr = new int[shape[0]+1];
+    indptr[0] = 0;
 }
 
 void SpM::operator=(const SpM &mr){

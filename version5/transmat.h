@@ -132,6 +132,42 @@ SpM reorder_row(SpM &mtx, int row_beg, int row_end, int* seq){
     return mr;
 }
 
+SpM reorder_row(SpM &mtx, int row_beg, int row_end, int* seq,int *bindptr){
+
+    auto indptr = mtx.indptr + row_beg;
+    int offset = indptr[0];
+    int p_indptr_len = row_end - row_beg + 1;
+    auto data = mtx.data + indptr[0];
+    auto indices = mtx.indices + indptr[0];
+    // dend = mtx.data + indptr[p_indptr_len-1];
+    int shape[3];
+    shape[0] = row_end - row_beg;
+    shape[1] = mtx.shape[1];
+    shape[2] = indptr[shape[0]] - indptr[0];
+
+    // for(int i = 0; i < 3; i++)
+    //     cout << shape[i] << ' ';
+    // cout << endl;
+
+    SpM mr(shape);
+    // vector<int> tail(CORENUM,0);
+    // int MIN_CHUNK_SIZE = 200000;
+    // if (shape[0] < MIN_CHUNK_SIZE || CORENUM == 1){
+    int tail = 0;
+    for(int i = 0; i < shape[0]; i++){
+        int s = seq[i];
+        int ind = (mr.indptr[i] + (indptr[s+1] - indptr[s]));
+        mr.indptr[i+1] = ind;
+        bindptr[i+1] = ind;
+        for( int j = indptr[s]-offset; j < indptr[s+1]-offset; j++ ){
+            mr.data[tail] = data[j];
+            mr.indices[tail] = indices[j];
+            tail++;
+        }
+    }
+    return mr;
+}
+
 int gen_new_panels(SpM &mtx, SpM* &plist, int* &psize_list,int &end_psize_list, int &bnum){
 
     // clock_t time_beg = clock();
