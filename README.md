@@ -22,6 +22,6 @@ e.g.
 ```
 mat/mtx/web-Stanford
 ```
-Finally, Run the following command to run the code.
+Finally, run the following command to run the code.
 
 ```./serial```
