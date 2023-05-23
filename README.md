@@ -25,3 +25,8 @@ mat/mtx/web-Stanford
 Finally, run the following command to run the code.
 
 ```./serial```
+
+Additionally, if needing to compute large matrices, the following command need to be run to prevent stack overflow.
+```
+ulimit -s 65536
+'''
